@@ -23,3 +23,13 @@ go.work.sum
 
 # env file
 .env
+
+
+# Ignore user-specific settings
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+
+# Ignore local environment files
+.idea/inspectionProfiles/
+.idea/httpRequests/
