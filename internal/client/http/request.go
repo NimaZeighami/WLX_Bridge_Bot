@@ -18,7 +18,7 @@ func Get[T any](ctx context.Context, baseURL string, headers map[string]string, 
 		return nil, fmt.Errorf("error parsing URL with query params: %v", err)
 	}
 
-	log.Infof("Sending GET request to URL: %s", finalURL)
+	// log.Infof("Sending GET request to URL: %s", finalURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", finalURL, nil)
 	if err != nil {
@@ -60,7 +60,7 @@ func Get[T any](ctx context.Context, baseURL string, headers map[string]string, 
 			return nil, err
 		}
 
-		log.Infof("GET request successful: %s", finalURL)
+		// log.Infof("GET request successful: %s", finalURL)
 		return &result, nil
 	}
 
@@ -74,7 +74,7 @@ func Post[T any](ctx context.Context, url string, headers map[string]string, bod
 		return nil, fmt.Errorf("error encoding JSON body: %v", err)
 	}
 
-	log.Infof("Sending POST request to URL: %s", url)
+	// log.Infof("Sending POST request to URL: %s", url)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, strings.NewReader(string(jsonBody)))
 	if err != nil {
@@ -117,7 +117,7 @@ func Post[T any](ctx context.Context, url string, headers map[string]string, bod
 			return nil, err
 		}
 
-		log.Infof("POST request successful: %s", url)
+		// log.Infof("POST request successful: %s", url)
 		return &result, nil
 	}
 

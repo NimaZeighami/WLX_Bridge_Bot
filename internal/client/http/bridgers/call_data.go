@@ -53,19 +53,19 @@ func FetchBridgeCallData(ctx context.Context, request CallDataRequest) (*CallDat
 		"Content-Type": "application/json",
 	}
 
-	log.Infof("Sending swap request: %+v", request)
+	log.Infof("Sending CallData request: %+v", request)
 
 	response, err := http.Post[CallDataResponse](ctx, url, headers, request)
 	if err != nil {
-		log.Errorf("Swap request failed: %v", err)
-		return nil, fmt.Errorf("swap request failed: %v", err)
+		log.Errorf("CallData request failed: %v", err)
+		return nil, fmt.Errorf("CallData request failed: %v", err)
 	}
 
 	if response.ResCode != 100 {
-		log.Errorf("Swap request failed: %s", response.ResMsg)
-		return nil, fmt.Errorf("swap request failed: %s", response.ResMsg)
+		log.Errorf("CallData request failed: %s", response.ResMsg)
+		return nil, fmt.Errorf("CallData request failed: %s", response.ResMsg)
 	}
 
-	log.Infof("Swap request successful. Transaction Data: %+v", response.Data.TxData)
+	log.Infof("CallData request successful. Transaction Data: %+v", response.Data.TxData)
 	return response, nil
 }
