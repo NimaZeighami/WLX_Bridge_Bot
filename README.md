@@ -36,16 +36,6 @@ go_bridgebot
     └── prettylog       # Enhanced and structured logging implementation
 ```
 
----
-
-## 🛠️ Installation
-
-### Prerequisites
-
-Ensure you have the following installed before proceeding:
-
-- Go (version 1.21+ recommended) ([https://golang.org/dl/](https://golang.org/dl/))
-- Git installed on your local machine
 
 ---
 
