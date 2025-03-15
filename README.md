@@ -169,13 +169,3 @@ if isApprovalNeeded {
 ```
 
 ---
-
-## 🌟 Contributing
-
-Contributions are welcome! To contribute:
-
-- Fork the repository.
-- Create a new branch (`git checkout -b feature/feature-name`).
-- Submit a pull request to the `main` branch.
-
----
