@@ -1,0 +1,27 @@
+tokensAddress:
+  tether:
+    bsc: "0x55d398326f99059ff775485246999027b3197955"
+    tron: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+    polygon: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f"
+  eth:
+    bsc: "our_eth_bsc_address_here"
+    tron: "our_eth_tron_address_here"
+
+walletsAddress:
+  tether:
+    tron: "our_usdt_tron_wallet_here"
+    bsc: "our_usdt_bsc_wallet_here"
+  eth:
+    tron: "our_eth_tron_wallet_here"
+    bsc: "our_eth_bsc_wallet_here"
+
+bridgersContractsAddress:
+  eth: "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  bsc: "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  polygon: "0xb685760ebd368a891f27ae547391f4e2a289895b" # Polygon or Matic
+  oec: "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  fantom: "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  arbitrum: "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  avalanche: "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  optimism : "0xb685760ebd368a891f27ae547391f4e2a289895b"
+  tron: "TPwezUWpEGmFBENNWJHwXHRG1D2NCEEt5s"

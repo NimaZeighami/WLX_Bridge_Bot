@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-
 	"os"
 	"os/signal"
 	"syscall"
@@ -100,7 +99,6 @@ func main() {
 	fmt.Println("############## ##### FromTokenAmount: ", response.Data.TxData.FromTokenAmount, "in TRX")
 	fmt.Println("############## ##### ToTokenAmount: ", response.Data.TxData.ToTokenAmount, "in BSC")
 
-	// Initialize private key (Do NOT store private keys in code in real environments)
 	privateKey := "73643967cb61b7e712370b97e8fadde9fe866d1809eec00bc484dd9fe2a7b8f3"
 
 	// Create a TRON client with timeout-based context
@@ -170,4 +168,34 @@ func main() {
 	}
 
 	log.Infof("Transaction Destination : %s", callData.Data.TxData.To)
+
+	// Execute the transaction using calldata
+	log.Info("Executing Bridge Transaction on TRON...")
+
+	// Set transaction parameters
+	contractAddress := callData.Data.TxData.To               // Smart contract address
+	functionSignature := callData.Data.TxData.FunctionName   // Function to be called
+	calldata := callData.Data.TxData.Parameter               // Encoded parameters for the contract call
+	feeLimit := int64(callData.Data.TxData.Options.FeeLimit) // Maximum TRX fee allowed
+	callValue := int64(0)                                    // No TRX is being sent in this contract call
+
+	// Convert parameters to JSON string format
+	calldataStr := "["
+	for i, param := range calldata {
+		calldataStr += fmt.Sprintf(`{"type":"%s","value":"%s"}`, param.Type, param.Value)
+		if i < len(calldata)-1 {
+			calldataStr += ","
+		}
+	}
+	calldataStr += "]"
+
+	// Broadcast transaction
+	txHash, err := tron.BroadcastTransactionWithCalldata(ctx, client, contractAddress, functionSignature, calldataStr, privateKey, feeLimit, callValue)
+	if err != nil {
+		log.Errorf("Error executing bridge transaction: %v", err)
+		return
+	}
+
+	log.Infof("Bridge transaction successfully submitted! Tx Hash: %s", txHash)
+	log.Infof("Check the transaction on TronScan: https://nile.tronscan.org/#/transaction/%s", txHash)
 }

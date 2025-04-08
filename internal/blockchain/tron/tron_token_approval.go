@@ -21,7 +21,7 @@ const (
 	TokenAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf" // USDT Contract Address on Nile Testnet
 	// TokenAddress        = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" // USDT Contract Address on Mainnet
 	ContractAddress = "TPwezUWpEGmFBENNWJHwXHRG1D2NCEEt5s"
-	ApprovalAmount  = 10 // USDT (Dont Mention Decimal it get multiplied by 1e6) 
+	ApprovalAmount  = 5                             // USDT (Dont Mention Decimal it get multiplied by 1e6)
 	TronNode        = "grpc.nile.trongrid.io:50051" // We Can have Array of Nodes and if one of them fails we can switch to another
 	// TronNode       = "grpc.trongrid.io:50051"
 
@@ -214,7 +214,6 @@ func RevokeApproval(ctx context.Context, client *client.GrpcClient, privateKey s
 	return txHash, nil
 }
 
-
 // SignTransaction signs a TRON transaction using the provided private key.
 func SignTransaction(tx *core.Transaction, privateKey string) (*core.Transaction, error) {
 	rawData, err := proto.Marshal(tx.GetRawData())
@@ -236,4 +235,94 @@ func SignTransaction(tx *core.Transaction, privateKey string) (*core.Transaction
 
 	tx.Signature = append(tx.Signature, signature)
 	return tx, nil
+}
+
+// BroadcastTransaction signs and broadcasts a TRON transaction
+func BroadcastTransaction(client *client.GrpcClient, tx *core.Transaction, privateKey string) (string, error) {
+	// Sign the transaction
+	signedTx, err := SignTransaction(tx, privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign transaction: %v", err)
+	}
+
+	// Compute transaction ID (Txid) manually
+	rawData, err := proto.Marshal(signedTx.GetRawData())
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal transaction raw data: %v", err)
+	}
+	txHash := sha256.Sum256(rawData)
+	txHashHex := hex.EncodeToString(txHash[:])
+
+	// Broadcast the transaction
+	result, err := client.Broadcast(signedTx)
+	if err != nil {
+		return "", fmt.Errorf("failed to broadcast transaction: %v", err)
+	}
+
+	fmt.Printf("Transaction broadcasted successfully: %s\n", result)
+	return txHashHex, nil
+}
+
+
+// BroadcastTransactionWithCalldata executes a TRON smart contract transaction using calldata.
+func BroadcastTransactionWithCalldata(ctx context.Context, client *client.GrpcClient, contractAddress, functionSignature, calldata, privateKey string, feeLimit, callValue int64) (string, error) {
+	// Convert private key to TRON Base58 address
+	privKey, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		return "", fmt.Errorf("invalid private key: %v", err)
+	}
+
+	// Convert public key to TRON address
+	pubKey := privKey.PublicKey
+	ethAddress := crypto.PubkeyToAddress(pubKey).Hex() // Ethereum-style hex address
+	tronHexAddress := "41" + ethAddress[2:]            // Convert to Tron Hex format
+	tronHexBytes, err := common.Hex2Bytes(tronHexAddress)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert hex to bytes: %v", err)
+	}
+	// Convert Hex Tron address to Base58
+	fromAddress := common.EncodeCheck(tronHexBytes)
+
+	// Call the contract
+	txExt, err := client.TriggerContract(
+		fromAddress,
+		contractAddress,
+		functionSignature, // Function name
+		calldata,          // Encoded parameters
+		feeLimit,
+		callValue,
+		"",
+		0,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create transaction: %v", err)
+	}
+
+	tx := txExt.GetTransaction()
+	if tx == nil {
+		return "", fmt.Errorf("transaction is nil")
+	}
+
+	// Sign the transaction
+	signedTx, err := SignTransaction(tx, privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign transaction: %v", err)
+	}
+
+	// Compute transaction ID (Txid) manually
+	rawData, err := proto.Marshal(signedTx.GetRawData())
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal transaction raw data: %v", err)
+	}
+	txHash := sha256.Sum256(rawData)
+	txHashHex := hex.EncodeToString(txHash[:])
+
+	// Broadcast the transaction
+	result, err := client.Broadcast(signedTx)
+	if err != nil {
+		return "", fmt.Errorf("failed to broadcast transaction: %v", err)
+	}
+
+	fmt.Printf("Transaction broadcasted successfully: %s\n",result)
+	return txHashHex, nil
 }
