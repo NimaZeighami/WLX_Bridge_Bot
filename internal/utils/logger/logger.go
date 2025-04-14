@@ -2,8 +2,9 @@ package logger
 
 import (
 	"bridgebot/pkg/prettylog"
-	"log/slog"
 	"fmt"
+	"log/slog"
+	"os"
 )
 
 var (
@@ -16,6 +17,9 @@ var (
 	Warnf  func(format string, args ...any)
 	Errorf func(format string, args ...any)
 	Debugf func(format string, args ...any)
+
+	Fatal  func(msg string, args ...any)
+	Fatalf func(format string, args ...any)
 )
 
 func init() {
@@ -43,4 +47,15 @@ func init() {
 	Debugf = func(format string, args ...any) {
 		logger.Debug(fmt.Sprintf(format, args...))
 	}
+
+	// Fatal logging
+	Fatal = func(msg string, args ...any) {
+		logger.Error(fmt.Sprintf(msg, args...))
+		os.Exit(1)
+	}
+	Fatalf = func(format string, args ...any) {
+		logger.Error(fmt.Sprintf(format, args...))
+		os.Exit(1)
+	}
+
 }

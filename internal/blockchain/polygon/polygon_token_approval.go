@@ -181,7 +181,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"log"
+	log "bridgebot/internal/utils/logger"
 	"math/big"
 	"os"
 	"strings"
@@ -283,11 +283,12 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		return "", fmt.Errorf("failed to get nonce: %w", err)
 	}
 
-	// Suggest gas price.
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to suggest gas price: %w", err)
 	}
+
+	gasPrice = new(big.Int).Mul(gasPrice, big.NewInt(120)) // Increase by 20%
 
 	// Estimate gas limit.
 	msg := ethereum.CallMsg{
@@ -297,12 +298,13 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		Value:    big.NewInt(0),
 		GasPrice: gasPrice,
 	}
-	gasLimit, err := client.EstimateGas(ctx, msg)
-	if err != nil {
-		// Fallback to a default gas limit.
-		gasLimit = 100000
-		log.Printf("Gas estimation failed, using default gas limit %d: %v", gasLimit, err)
-	}
+
+gasLimit, err := client.EstimateGas(ctx, msg)
+if err != nil {
+    // If estimation fails, use a default gas limit
+    gasLimit = 100000
+    log.Warnf("Gas estimation failed, using default gas limit: %v", err)
+}
 
 	// Build the transaction.
 	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, data)
@@ -311,7 +313,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
 		chainID = big.NewInt(137) // Default to Polygon mainnet
-		log.Printf("Failed to get chain ID, defaulting to 137: %v", err)
+	log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
 	}
 
 	// Sign the transaction.
@@ -432,7 +434,7 @@ func SignTransaction(client *ethclient.Client, tx *types.Transaction, privateKey
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
 		chainID = big.NewInt(137)
-		log.Printf("Failed to get chain ID, defaulting to 137: %v", err)
+		log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
 	}
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
 	if err != nil {

@@ -7,6 +7,15 @@ tokensAddress:
     bsc: "our_eth_bsc_address_here"
     tron: "our_eth_tron_address_here"
 
+tokensDecimals:
+  tether:
+    bsc: 18
+    tron: 6
+    polygon: 6
+  eth:
+    bsc: 18
+    tron: 18
+
 walletsAddress:
   tether:
     tron: "our_usdt_tron_wallet_here"

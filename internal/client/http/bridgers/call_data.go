@@ -22,6 +22,11 @@ type CallDataRequest struct {
 	SourceType       string `json:"sourceType,omitempty"`
 	SourceFlag       string `json:"sourceFlag"`
 	Slippage         string `json:"slippage,omitempty"`
+	UtmSource		string `json:"utmSource,omitempty"`
+	OrderId		 string `json:"orderId,omitempty"`
+	SessionUuid	 string `json:"sessionUuid,omitempty"`
+	UserNo		 string `json:"userNo,omitempty"`
+	
 }
 
 type CallDataResponse struct {
