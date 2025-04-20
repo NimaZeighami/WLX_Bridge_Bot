@@ -1,180 +1,3 @@
-// package polygon
-
-// import (
-// 	"context"
-// 	"fmt"
-// 	"log"
-// 	"math/big"
-// 	"strings"
-
-// 	"github.com/ethereum/go-ethereum"
-// 	"github.com/ethereum/go-ethereum/accounts/abi"
-// 	"github.com/ethereum/go-ethereum/common"
-// 	"github.com/ethereum/go-ethereum/core/types"
-// 	"github.com/ethereum/go-ethereum/crypto"
-// 	"github.com/ethereum/go-ethereum/ethclient"
-// )
-
-// const (
-// 	TokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" // Polygon  USDT Contract Address on Mainnet
-// 	ContractAddress = "TPwezUWpEGmFBENNWJHwXHRG1D2NCEEt5s"
-// 	PolygonNode     = "https://polygon-rpc.com" 
-// 	PrivateKey = "73de51d8df89c729e384b228a7f093e9d55c58278b6270e15513bfc97cbc0746"
-// )
-
-// func ApproveERC20(tokenAddressStr, spenderAddressStr string, amount *big.Int) (string, error) {
-// 	// Load environment variables for RPC URL and private key
-// 	rpcURL := PolygonNode
-// 	privKeyHex := PrivateKey
-// 	if rpcURL == "" || privKeyHex == "" {
-// 		return "", fmt.Errorf("missing RPC URL or Private Key in environment")
-// 	}
-
-// 	// Connect to the Polygon RPC endpoint
-// 	client, err := ethclient.Dial(rpcURL)
-// 	if err != nil {
-// 		log.Printf("Failed to connect to Polygon RPC: %v", err)
-// 		return "", err
-// 	}
-// 	// It's good practice to close the client when done, but if this function is short-lived, it may close on function exit.
-// 	// defer client.Close()
-
-// 	// Parse the private key to an *ecdsa.PrivateKey
-// 	privateKey, err := crypto.HexToECDSA(privKeyHex)
-// 	if err != nil {
-// 		log.Printf("Failed to parse private key: %v", err)
-// 		return "", err
-// 	}
-// 	// Derive the from address (public key) for logging or nonce retrieval
-// 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-// 	log.Printf("Using address %s to approve", fromAddress.Hex())
-
-// 	// Get current chain ID for EIP-155 (Polygon mainnet = 137)
-// 	ctx := context.Background()
-// 	chainID, err := client.NetworkID(ctx)
-// 	if err != nil {
-// 		log.Printf("Failed to get network chain ID: %v", err)
-// 		return "", err
-// 	}
-
-// 	// Prepare the ABI for ERC20 approve(address,uint256)
-// 	erc20ABI := `[{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]`
-// 	contractABI, err := abi.JSON(strings.NewReader(erc20ABI))
-// 	if err != nil {
-// 		log.Printf("Failed to parse ERC20 ABI: %v", err)
-// 		return "", err
-// 	}
-
-// 	// Convert input addresses to common.Address
-// 	tokenAddress := common.HexToAddress(tokenAddressStr)
-// 	spenderAddress := common.HexToAddress(spenderAddressStr)
-
-// 	// Pack the ABI-encoded function call data for approve(spender, amount)
-// 	data, err := contractABI.Pack("approve", spenderAddress, amount)
-// 	if err != nil {
-// 		log.Printf("Failed to pack approve call data: %v", err)
-// 		return "", err
-// 	}
-
-// 	// Get the account nonce (using pending state to include pending transactions)
-// 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-// 	if err != nil {
-// 		log.Printf("Failed to fetch nonce for %s: %v", fromAddress.Hex(), err)
-// 		return "", err
-// 	}
-
-// 	// Get suggested gas price (legacy)
-// 	gasPrice, err := client.SuggestGasPrice(ctx)
-// 	if err != nil {
-// 		log.Printf("Failed to get gas price: %v", err)
-// 		return "", err
-// 	}
-
-// 	// Estimate gas limit required for the transaction
-// 	callMsg := ethereum.CallMsg{From: fromAddress, To: &tokenAddress, Value: big.NewInt(0), Data: data, GasPrice: gasPrice}
-// 	gasLimit, err := client.EstimateGas(ctx, callMsg)
-// 	if err != nil {
-// 		// If estimation fails, use a reasonable default for ERC-20 approval
-// 		gasLimit = 100000 // 100k gas as a fallback
-// 		log.Printf("Gas estimation failed, using default gas limit %d: %v", gasLimit, err)
-// 	}
-
-// 	// Create the unsigned transaction (here we use a legacy transaction format)
-// 	tx := types.NewTransaction(nonce, tokenAddress, big.NewInt(0), gasLimit, gasPrice, data)
-
-// 	// Sign the transaction with the private key and chain ID (EIP-155 signer)
-// 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
-// 	if err != nil {
-// 		log.Printf("Failed to sign transaction: %v", err)
-// 		return "", err
-// 	}
-
-// 	// Send the signed transaction to the network
-// 	err = client.SendTransaction(ctx, signedTx)
-// 	if err != nil {
-// 		log.Printf("Failed to send transaction: %v", err)
-// 		return "", err
-// 	}
-
-// 	txHash := signedTx.Hash().Hex()
-// 	log.Printf("Approve transaction submitted: %s", txHash)
-// 	return txHash, nil
-// }
-
-// Sample code for Polygon contract approval and transaction signing
-// package polygon
-
-// import ()
-
-// func NewPolygonClient() () {
-// 	// Initialize the Polygon client here
-
-// }
-
-// func IsApprovalNeeded() bool {
-// 	// Implement the logic to determine if approval is needed
-// 	return true
-// }
-
-// func ApproveContract(){
-
-// }
-
-// func RevokeApproval(){
-
-// }
-
-// func SignTransaction(){
-
-// }
-
-// func BroadcastTransaction(){
-
-// }
-
-// func BroadcastTransactionWithCalldata(){
-
-// }
-
-// (Recommended Additions)
-
-// GetCurrentAllowance()
-
-// Checks how much allowance a spender has.
-
-// Why? Helps IsApprovalNeeded() make decisions.
-
-// IncreaseAllowance() / DecreaseAllowance()
-
-// Safer than approve() (avoids race conditions).
-
-// BatchApprove()
-
-// Approves multiple tokens in one transaction (gas efficiency).
-
-// polygon_token_approval.go
-// Sample code for Polygon contract approval and transaction signing.
-// This file implements complete functionality for interacting with an ERC20 token on Polygon.
 package polygon
 
 import (
@@ -456,4 +279,51 @@ func BroadcastTransaction(client *ethclient.Client, signedTx *types.Transaction)
 func BroadcastTransactionWithCalldata(client *ethclient.Client, to common.Address, calldata []byte, privateKey *ecdsa.PrivateKey) (string, error) {
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 	return signAndSendTx(context.Background(), client, fromAddress, to, calldata, privateKey)
+}
+
+
+// BroadcastTransactionWithCalldataWithGas signs and sends a transaction using the given gas price.
+func BroadcastTransactionWithCalldataWithGas(
+	ctx context.Context,
+	client *ethclient.Client,
+	to common.Address,
+	calldata []byte,
+	privateKey *ecdsa.PrivateKey,
+	gasPrice *big.Int,
+) (string, error) {
+	from := crypto.PubkeyToAddress(privateKey.PublicKey)
+
+	nonce, err := client.PendingNonceAt(ctx, from)
+	if err != nil {
+		return "", err
+	}
+
+	msg := ethereum.CallMsg{
+		From:     from,
+		To:       &to,
+		GasPrice: gasPrice,
+		Data:     calldata,
+	}
+	gasLimit, err := client.EstimateGas(ctx, msg)
+	if err != nil {
+		gasLimit = 100000 // fallback
+	}
+
+	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, calldata)
+
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		chainID = big.NewInt(137) // default to Polygon
+	}
+
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	if err := client.SendTransaction(ctx, signedTx); err != nil {
+		return "", err
+	}
+
+	return signedTx.Hash().Hex(), nil
 }

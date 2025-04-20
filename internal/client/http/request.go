@@ -33,7 +33,7 @@ func Get[T any](ctx context.Context, baseURL string, headers map[string]string, 
 		Timeout: 5 * time.Second,
 	}
 
-	const maxRetries = 3
+	const maxRetries = 3 // TODO: get it from config in the params
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Infof("Attempt %d to call %s", attempt, finalURL)
@@ -143,6 +143,6 @@ func addQueryParams(baseURL string, params map[string]string) (string, error) {
 	return u.String(), nil
 }
 
-// ! If speed mattes, consider using gnet or fasthttp instead of the standard library.
+// ! If speed matters, consider using gnet or fasthttp instead of the standard library.
 // ! If you need to send a lot of requests, consider using a connection pool.
 // ! If you need to send a lot of requests to the same host, consider using a connection pool.

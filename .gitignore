@@ -32,3 +32,6 @@ go.work.sum
 # Ignore local environment files
 .idea/inspectionProfiles/
 .idea/httpRequests/
+
+# Ignore text files
+.txt
