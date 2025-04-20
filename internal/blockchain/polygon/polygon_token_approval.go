@@ -1,30 +1,25 @@
 package polygon
 
 import (
+	"bridgebot/configs"
+	log "bridgebot/internal/utils/logger"
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	log "bridgebot/internal/utils/logger"
 	"math/big"
-	"os"
 	"strings"
+
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum"
 )
+
+const TokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" // Polygon  USDT Contract Address on Mainnet
 
 // extendedERC20ABI includes functions for approve, allowance, increaseAllowance, and decreaseAllowance.
-
-const (
-	TokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" // Polygon  USDT Contract Address on Mainnet
-	ContractAddress = "TPwezUWpEGmFBENNWJHwXHRG1D2NCEEt5s"
-	PolygonNode     = "https://polygon-rpc.com" 
-	PrivateKey = "73de51d8df89c729e384b228a7f093e9d55c58278b6270e15513bfc97cbc0746"
-)
-
 const extendedERC20ABI = `
 [
 	{
@@ -87,7 +82,8 @@ func init() {
 
 // NewPolygonClient creates and returns an Ethereum client connected to Polygon using POLYGON_RPC_URL.
 func NewPolygonClient() (*ethclient.Client, error) {
-	rpcURL := os.Getenv("POLYGON_RPC_URL")
+	configs.LoadEnv()
+	rpcURL := configs.GetEnv("POLYGON_RPC_URL", "")
 	if rpcURL == "" {
 		return nil, fmt.Errorf("POLYGON_RPC_URL not set in environment")
 	}
@@ -122,12 +118,12 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		GasPrice: gasPrice,
 	}
 
-gasLimit, err := client.EstimateGas(ctx, msg)
-if err != nil {
-    // If estimation fails, use a default gas limit
-    gasLimit = 100000
-    log.Warnf("Gas estimation failed, using default gas limit: %v", err)
-}
+	gasLimit, err := client.EstimateGas(ctx, msg)
+	if err != nil {
+		// If estimation fails, use a default gas limit
+		gasLimit = 100000
+		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
+	}
 
 	// Build the transaction.
 	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, data)
@@ -136,7 +132,7 @@ if err != nil {
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
 		chainID = big.NewInt(137) // Default to Polygon mainnet
-	log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
+		log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
 	}
 
 	// Sign the transaction.
@@ -280,7 +276,6 @@ func BroadcastTransactionWithCalldata(client *ethclient.Client, to common.Addres
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 	return signAndSendTx(context.Background(), client, fromAddress, to, calldata, privateKey)
 }
-
 
 // BroadcastTransactionWithCalldataWithGas signs and sends a transaction using the given gas price.
 func BroadcastTransactionWithCalldataWithGas(

@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"bridgebot/configs"
 	"bridgebot/internal/blockchain/polygon"
 	"bridgebot/internal/client/http/bridgers"
 	"bridgebot/internal/database"
@@ -9,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -49,10 +49,14 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 	}
 
 	log.Infof("Transaction Destination: %s", callData.Data.TxData.To)
-	privateKeyHex := os.Getenv("POLYGON_PRIVATE_KEY")
-	if privateKeyHex == "" {
-		log.Fatal("POLYGON_PRIVATE_KEY not set in environment")
-	}
+	configs.LoadEnv()
+	privateKeyHex := configs.GetEnv("POLYGON_PRIVATE_KEY", "")
+
+	// privateKeyHex := os.Getenv("POLYGON_PRIVATE_KEY")
+	// if privateKeyHex == "" {
+	// 	log.Fatal("POLYGON_PRIVATE_KEY not set in environment")
+	// }
+	
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)
 	if err != nil {
 		log.Fatalf("Failed to parse private key: %v", err)
