@@ -7,8 +7,8 @@ import (
 )
 
 // LoadEnv loads the .env file from the configs directory
-func LoadEnv() {
-	err := godotenv.Load("C:/Users/Nima/Desktop/WLX_Bridge_Bot/configs/.env")
+func LoadEnv(envFilePath string) {
+	err := godotenv.Load(envFilePath) //"C:/Users/Nima/Desktop/WLX_Bridge_Bot/.env"
 	if err != nil {
 		log.Errorf("Error loading .env file: %v", err)
 	}
