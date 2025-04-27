@@ -1,18 +1,18 @@
 package orchestration
 
 import (
+	"bridgebot/configs"
 	"bridgebot/internal/blockchain/polygon"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const (
-	ApprovalAmount = 13000000 // Amount to approve
+	ApprovalAmount = 5000000 // Amount to approve
 )
 
 func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string) {
@@ -43,10 +43,8 @@ func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, s
 		log.Fatalf("Error initializing Polygon client: %v", err)
 	}
 
-	privateKeyHex := os.Getenv("POLYGON_PRIVATE_KEY")
-	if privateKeyHex == "" {
-		privateKeyHex = "dde619e9c94141eb5c60cf3c52e812f95db0a593543767a59e6b12e133a40c6d"
-	}
+	privateKeyHex := configs.GetPrivateKeyHex()
+
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)
 	if err != nil {
 		log.Fatalf("Failed to convert private key: %v", err)

@@ -83,11 +83,8 @@ func init() {
 // NewPolygonClient creates and returns an Ethereum client connected to Polygon using POLYGON_RPC_URL.
 func NewPolygonClient() (*ethclient.Client, error) {
 	configs.LoadEnv("../../.env")
-	rpcURL := configs.GetEnv("POLYGON_RPC_URL", "")
-	if rpcURL == "" {
-		return nil, fmt.Errorf("POLYGON_RPC_URL not set in environment")
-	}
-	client, err := ethclient.Dial(rpcURL)
+
+	client, err := ethclient.Dial(configs.GetRpcURL())
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Polygon RPC: %w", err)
 	}

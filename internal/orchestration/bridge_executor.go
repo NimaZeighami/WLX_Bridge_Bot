@@ -50,13 +50,8 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	log.Infof("Transaction Destination: %s", callData.Data.TxData.To)
 	configs.LoadEnv("../../.env")
-	privateKeyHex := configs.GetEnv("POLYGON_PRIVATE_KEY", "")
+	privateKeyHex := configs.GetPrivateKeyHex()
 
-	// privateKeyHex := os.Getenv("POLYGON_PRIVATE_KEY")
-	// if privateKeyHex == "" {
-	// 	log.Fatal("POLYGON_PRIVATE_KEY not set in environment")
-	// }
-	
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)
 	if err != nil {
 		log.Fatalf("Failed to parse private key: %v", err)

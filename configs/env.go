@@ -6,11 +6,26 @@ import (
 	"os"
 )
 
+func GetPrivateKeyHex() string {
+	return os.Getenv("POLYGON_PRIVATE_KEY")
+}
+
+func GetRpcURL() string {
+	return os.Getenv("POLYGON_RPC_URL")
+}
+
 // LoadEnv loads the .env file from the configs directory
 func LoadEnv(envFilePath string) {
-	err := godotenv.Load(envFilePath) //"C:/Users/Nima/Desktop/WLX_Bridge_Bot/.env"
+	err := godotenv.Load(envFilePath) 
 	if err != nil {
 		log.Errorf("Error loading .env file: %v", err)
+	}
+	if GetPrivateKeyHex() == "" {
+		log.Fatal("POLYGON_PRIVATE_KEY not set in environment")
+	}
+
+	if GetRpcURL() == "" {
+		log.Fatal("POLYGON_RPC_URL not set in environment")
 	}
 }
 
