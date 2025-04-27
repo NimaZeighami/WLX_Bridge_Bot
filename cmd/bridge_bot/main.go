@@ -1,9 +1,3 @@
-//! In  (PowerShell):
-//! $env:POLYGON_RPC_URL="https://polygon-rpc.com"
-// ! In  (Command Prompt / CMD):
-//! set POLYGON_RPC_URL=https://polygon-rpc.com
-// ! POLYGON_PRIVATE_KEY = "dde619e9c94141eb5c60cf3c52e812f95db0a593543767a59e6b12e133a40c6d"
-// ! set POLYGON_PRIVATE_KEY=dde619e9c94141eb5c60cf3c52e812f95db0a593543767a59e6b12e133a40c6d
 package main
 
 import (
@@ -52,5 +46,4 @@ func main() {
 
 	log.Info("BridgeBot execution completed.")
 }
-
 
