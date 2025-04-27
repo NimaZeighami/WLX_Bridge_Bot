@@ -4,7 +4,6 @@ import (
 	"bridgebot/internal/orchestration"
 	log "bridgebot/internal/utils/logger"
 	"context"
-
 )
 
 func main() {
@@ -32,9 +31,10 @@ func main() {
 		quoteRes.Data.TxData.FromTokenAmount,
 	)
 
-	orchestration.CheckPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress)
-	orchestration.SubmitPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress, usdtPolygon.BridgersSmartContractAddress)
-
+	isApprovalNeeded := orchestration.CheckPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress)
+	if isApprovalNeeded {
+		orchestration.SubmitPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress, usdtPolygon.BridgersSmartContractAddress)
+	}
 	callReq := orchestration.BuildCalldataRequest(
 		userAddr,
 		receiverAddr,
@@ -46,4 +46,3 @@ func main() {
 
 	log.Info("BridgeBot execution completed.")
 }
-

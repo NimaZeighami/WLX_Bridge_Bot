@@ -1,3 +1,13 @@
+// ExecuteBridgeTransaction handles calldata construction and broadcasting the transaction.
+// Package orchestration provides functionality for managing and executing 
+// complex workflows and operations related to blockchain transactions.
+// 
+// The `bridge_executor.go` file contains the implementation for executing 
+// bridge transactions on the Polygon network. It handles fetching transaction 
+// calldata, encoding it, signing the transaction with a private key, and 
+// broadcasting it to the network. Additionally, it ensures proper gas price 
+// estimation and provides transaction status tracking via PolygonScan.
+
 package orchestration
 
 import (
@@ -24,7 +34,7 @@ func BuildCalldataRequest(userAddr, receiverAddr string, from, to database.Token
 		ToAddress:        receiverAddr,
 		FromTokenChain:   "POLYGON",
 		ToTokenChain:     "BSC",
-		FromTokenAmount:  "1000000",
+		FromTokenAmount:  fmt.Sprintf("%d", BridgingAmount),
 		AmountOutMin:     amountOutMin,
 		FromCoinCode:     "USDT(POL)",
 		ToCoinCode:       "USDT(BSC)",
@@ -35,7 +45,7 @@ func BuildCalldataRequest(userAddr, receiverAddr string, from, to database.Token
 	}
 }
 
-// ExecuteBridgeTransaction handles calldata construction and broadcasting the transaction.
+
 func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequest) {
 	log.Info("Fetching bridge transaction calldata...")
 	callData, err := bridgers.FetchBridgeCallData(ctx, request)

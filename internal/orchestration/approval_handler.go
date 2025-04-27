@@ -1,3 +1,11 @@
+// Package orchestration provides functionality for handling various operations 
+// related to blockchain interactions and approvals.
+//
+// This file contains the SubmitPolygonApproval function, which is responsible 
+// for submitting an approval transaction on the Polygon blockchain. It interacts 
+// with a specified token contract to approve a spender address for a required 
+// amount, enabling further operations such as token transfers or bridging.
+
 package orchestration
 
 import (
@@ -12,17 +20,17 @@ import (
 )
 
 const (
-	ApprovalAmount = 5000000 // Amount to approve
+	BridgingAmount = 20_000_000 // Amount to approve, get qoute from bridgers and broadcast transaction
 )
 
-func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string) {
+func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string) bool {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
 	}
 	tokenAddress := common.HexToAddress(tokenAddressStr)
 	spender := common.HexToAddress(owner)
-	requiredAmount := big.NewInt(ApprovalAmount)
+	requiredAmount := big.NewInt(BridgingAmount)
 
 	log.Info("Checking if approval is needed...")
 	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(owner), spender, requiredAmount)
@@ -35,6 +43,7 @@ func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr str
 	} else {
 		log.Info("Approval is needed!!")
 	}
+	return isNeeded
 }
 
 func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, spenderAddress string) {
@@ -51,7 +60,7 @@ func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, s
 	}
 	tokenAddress := common.HexToAddress(tokenAddressStr)
 	spender := common.HexToAddress(spenderAddress)
-	requiredAmount := big.NewInt(ApprovalAmount)
+	requiredAmount := big.NewInt(BridgingAmount)
 
 	txHash, err := polygon.ApproveContract(client, tokenAddress, spender, requiredAmount, privateKey)
 	if err != nil {
