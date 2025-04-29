@@ -1,11 +1,11 @@
 // ExecuteBridgeTransaction handles calldata construction and broadcasting the transaction.
-// Package orchestration provides functionality for managing and executing 
+// Package orchestration provides functionality for managing and executing
 // complex workflows and operations related to blockchain transactions.
-// 
-// The `bridge_executor.go` file contains the implementation for executing 
-// bridge transactions on the Polygon network. It handles fetching transaction 
-// calldata, encoding it, signing the transaction with a private key, and 
-// broadcasting it to the network. Additionally, it ensures proper gas price 
+//
+// The `bridge_executor.go` file contains the implementation for executing
+// bridge transactions on the Polygon network. It handles fetching transaction
+// calldata, encoding it, signing the transaction with a private key, and
+// broadcasting it to the network. Additionally, it ensures proper gas price
 // estimation and provides transaction status tracking via PolygonScan.
 
 package orchestration
@@ -38,13 +38,12 @@ func BuildCalldataRequest(userAddr, receiverAddr string, from, to database.Token
 		AmountOutMin:     amountOutMin,
 		FromCoinCode:     "USDT(POL)",
 		ToCoinCode:       "USDT(BSC)",
-		EquipmentNo:      generateEquipmentNo(userAddr),
+		EquipmentNo:      GenerateEquipmentNo(userAddr),
 		SourceType:       "H5",
 		SourceFlag:       "bridgers",
 		Slippage:         "0.2",
 	}
 }
-
 
 func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequest) {
 	log.Info("Fetching bridge transaction calldata...")
@@ -98,8 +97,8 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 	log.Infof("Check on PolygonScan: https://polygonscan.com/tx/%s", txHash)
 }
 
-// generateEquipmentNo ensures a fixed 32-character string for equipmentNo field.
-func generateEquipmentNo(userAddr string) string {
+// GenerateEquipmentNo ensures a fixed 32-character string for equipmentNo field.
+func GenerateEquipmentNo(userAddr string) string {
 	if len(userAddr) >= 32 {
 		return userAddr[:32]
 	}
