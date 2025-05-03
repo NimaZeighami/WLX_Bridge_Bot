@@ -52,23 +52,23 @@ func Connect(config DBConfig) (*gorm.DB, error) {
 // CheckDatabaseExists checks if the database exists using GORM
 func CheckDatabaseExists(db *gorm.DB) (bool, error) {
 	var count int64
-	err := db.Raw("SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name = ?", "bridgebot_config").Count(&count).Error
+	err := db.Raw("SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name = ?", "bridgebot_core").Count(&count).Error
 	if err != nil {
 		return false, fmt.Errorf("error checking database existence: %v", err)
 	}
 	return count > 0, nil
 }
 
-// CreateDatabase attempts to create a database named "bridgebot_config" if it does not already exist
+// CreateDatabase attempts to create a database named "bridgebot_core" if it does not already exist
 func CreateDatabase(db *gorm.DB) error {
-	return db.Exec("CREATE DATABASE IF NOT EXISTS bridgebot_config").Error
+	return db.Exec("CREATE DATABASE IF NOT EXISTS bridgebot_core").Error
 }
 
-// UseDatabase switches to the 'bridgebot_config' database using GORM
+// UseDatabase switches to the 'bridgebot_core' database using GORM
 func UseDatabase(db *gorm.DB) error {
-    err := db.Exec("USE bridgebot_config").Error
+    err := db.Exec("USE bridgebot_core").Error
     if err != nil {
-        return fmt.Errorf("failed to switch to 'bridgebot_config' database: %v", err)
+        return fmt.Errorf("failed to switch to 'bridgebot_core' database: %v", err)
     }
     return nil
 }
@@ -238,34 +238,34 @@ func InitializeDatabase(config DBConfig) error {
 // // CheckDatabaseExists checks if the database exists
 // func CheckDatabaseExists(db *sql.DB) (bool, error) {
 // 	var name string
-// 	err := db.QueryRow("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'bridgebot_config'").Scan(&name)
+// 	err := db.QueryRow("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'bridgebot_core'").Scan(&name)
 // 	if err != nil && err.Error() != "sql: no rows in result set" {
 // 		return false, fmt.Errorf("error checking database existence: %v", err)
 // 	}
-// 	return name == "bridgebot_config", nil
+// 	return name == "bridgebot_core", nil
 // }
 
-// // CreateDatabase attempts to create a database named "bridgebot_config" if it does not already exist.
+// // CreateDatabase attempts to create a database named "bridgebot_core" if it does not already exist.
 // func CreateDatabase(db *sql.DB) error {
-// 	_, err := db.Exec("CREATE DATABASE IF NOT EXISTS bridgebot_config")
+// 	_, err := db.Exec("CREATE DATABASE IF NOT EXISTS bridgebot_core")
 // 	if err != nil {
 // 		return fmt.Errorf("failed to create database: %v", err)
 // 	}
 // 	return nil
 // }
 
-// // UseDatabase switches to the 'bridgebot_config' database
+// // UseDatabase switches to the 'bridgebot_core' database
 // func UseDatabase(db *sql.DB) error {
-// 	_, err := db.Exec("USE bridgebot_config")
+// 	_, err := db.Exec("USE bridgebot_core")
 // 	if err != nil {
-// 		return fmt.Errorf("failed to switch to 'bridgebot_config' database: %v", err)
+// 		return fmt.Errorf("failed to switch to 'bridgebot_core' database: %v", err)
 // 	}
 // 	return nil
 // }
 
 // // CheckTableExists checks if the bridge_configurations table exists
 // func CheckTableExists(db *sql.DB) (bool, error) {
-// 	_, err := db.Exec("USE bridgebot_config")
+// 	_, err := db.Exec("USE bridgebot_core")
 // 	if err != nil {
 // 		return false, fmt.Errorf("failed to select database: %v", err)
 // 	}
@@ -279,10 +279,10 @@ func InitializeDatabase(config DBConfig) error {
 // }
 
 
-// // CreateTable creates the `bridgebot_config.bridge_configurations` table in the database
+// // CreateTable creates the `bridgebot_core.bridge_configurations` table in the database
 // func CreateTable(db *sql.DB) error {
 // 	createTableSQL := `
-// 	CREATE TABLE IF NOT EXISTS bridgebot_config.bridge_configurations (
+// 	CREATE TABLE IF NOT EXISTS bridgebot_core.bridge_configurations (
 // 		id INT AUTO_INCREMENT PRIMARY KEY,
 // 		network VARCHAR(255) NOT NULL,
 // 		chain_id INT ,
@@ -302,10 +302,10 @@ func InitializeDatabase(config DBConfig) error {
 
 // }
 
-// // HasInitialData checks if the `bridgebot_config.bridge_configurations` table contains any data
+// // HasInitialData checks if the `bridgebot_core.bridge_configurations` table contains any data
 // func HasInitialData(db *sql.DB) (bool, error) {
 // 	var recordCount int
-// 	err := db.QueryRow("SELECT COUNT(*) FROM bridgebot_config.bridge_configurations").Scan(&recordCount)
+// 	err := db.QueryRow("SELECT COUNT(*) FROM bridgebot_core.bridge_configurations").Scan(&recordCount)
 // 	if err != nil {
 // 		return false, fmt.Errorf("failed to check if initial data exists: %v", err)
 // 	}
@@ -316,7 +316,7 @@ func InitializeDatabase(config DBConfig) error {
 // func InsertInitialData(db *sql.DB) error {
 // 	// Example initial data
 // 	insertSQL := `
-// 	INSERT INTO bridgebot_config.bridge_configurations 
+// 	INSERT INTO bridgebot_core.bridge_configurations 
 // 	(network, token, chain_id, token_contract_address, token_decimals, bridgers_smart_contract_address, is_enabled) 
 // 	VALUES 
 // 	('BSC', 'USDT', 56, '0x55d398326f99059ff775485246999027b3197955', 18, '0xb685760ebd368a891f27ae547391f4e2a289895b', TRUE),

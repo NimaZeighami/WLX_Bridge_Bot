@@ -3,10 +3,9 @@ package bridge_swap
 import (
 	"bridgebot/internal/client/http/bridgers"
 	"bridgebot/internal/services"
+	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
-	log "bridgebot/internal/utils/logger"
-	
 )
 
 
@@ -20,7 +19,7 @@ type SwapService struct{}
 type BridgeProvider interface {}
 
 func (s *SwapService) ProcessSwap(ctx context.Context, req GetQuoteRequest) (string, string, error)  {
-	equipmentNo := orchestration.GenerateEquipmentNo(req.FromWalletAddress)
+	equipmentNo := services.GenerateEquipmentNo(req.FromWalletAddress)
 
 	quoteReq := bridgers.QuoteRequest{
 		FromTokenAddress: UsdtPolygonTokenAddress,

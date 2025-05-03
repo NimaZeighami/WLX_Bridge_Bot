@@ -23,7 +23,7 @@ func NewServer() *echo.Echo {
 
     e.Validator = &CustomValidator{validator: validator.New()}
 
-    e.POST("/v1/swap", bridge_swap.HandleSwap)
+    e.POST("/v1/getQuote", bridge_swap.HandleSwap)
 
     return e
 }

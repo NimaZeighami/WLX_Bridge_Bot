@@ -35,9 +35,11 @@ func HandleSwap(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"toTokenAmount": toAmount,
-        "toToken":       "USDT(BSC)",
+        "toToken":       "USDT",
+		"toTokenChain": "BSC",
         "fromTokenAmount": fromAmount,
-        "fromToken":       "USDT(POLYGON)",
+        "fromToken":       "USDT",
+		"fromTokenChain": "POLYGON",
         "quoteId":         "1",
 	})
 }
