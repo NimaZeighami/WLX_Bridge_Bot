@@ -6,7 +6,7 @@
 // with a specified token contract to approve a spender address for a required 
 // amount, enabling further operations such as token transfers or bridging.
 
-package orchestration
+package services
 
 import (
 	"bridgebot/configs"

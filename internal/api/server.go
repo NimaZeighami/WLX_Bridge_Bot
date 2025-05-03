@@ -23,7 +23,6 @@ func NewServer() *echo.Echo {
 
     e.Validator = &CustomValidator{validator: validator.New()}
 
-	// Todo: ADD Versioning Here
     e.POST("/v1/swap", bridge_swap.HandleSwap)
 
     return e

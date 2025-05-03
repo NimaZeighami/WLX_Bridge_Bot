@@ -8,7 +8,7 @@
 // broadcasting it to the network. Additionally, it ensures proper gas price
 // estimation and provides transaction status tracking via PolygonScan.
 
-package orchestration
+package services
 
 import (
 	"bridgebot/configs"

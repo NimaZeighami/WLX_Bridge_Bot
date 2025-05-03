@@ -4,7 +4,7 @@
 // Token map construction
 // OS signal handling
 
-package orchestration
+package services
 
 import (
 	"bridgebot/internal/database"
