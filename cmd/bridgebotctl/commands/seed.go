@@ -2,7 +2,7 @@ package commands
 
 import (
 	"database/sql"
-	"log"
+	log "bridgebot/internal/utils/logger"
 
 	"github.com/spf13/cobra"
 	_ "github.com/go-sql-driver/mysql"
@@ -26,7 +26,7 @@ var seedCmd = &cobra.Command{
 			log.Fatalf("Error seeding DB: %v", err)
 		}
 
-		log.Println("✅ Database seeded.")
+		log.Info("✅ Database seeded.")
 	},
 }
 

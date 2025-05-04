@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	log "bridgebot/internal/utils/logger"
 	"bridgebot/cmd/bridgebotctl/commands"
 )
 

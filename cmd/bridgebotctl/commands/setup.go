@@ -5,7 +5,7 @@ import (
 	"bridgebot/configs" // or wherever your GetEnv is
 	"database/sql"
 	"fmt"
-	"log"
+	log "bridgebot/internal/utils/logger"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
@@ -24,7 +24,6 @@ var setupCmd = &cobra.Command{
 		dbName := configs.GetEnv("DB_NAME", "bridgebot_config")
 
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/", user, pass, host, port)
-		fmt.Println("Connecting to DSN:", dsn)
 
 
 		db, err := sql.Open("mysql", dsn)
@@ -38,7 +37,7 @@ var setupCmd = &cobra.Command{
 			log.Fatalf("Failed to create DB: %v", err)
 		}
 
-		fmt.Printf("✅ Database '%s' is ready.\n", dbName)
+		log.Infof("✅ Database '%s' is ready.\n", dbName)
 	},
 }
 
