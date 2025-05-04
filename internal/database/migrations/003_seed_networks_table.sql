@@ -1,5 +1,5 @@
 -- +goose Up
-INSERT INTO networks (id, name, symbol) VALUES 
+INSERT INTO networks (chain_id, name, symbol) VALUES 
     (1, 'Ethereum', 'ETH'),
     (56, 'Binance Smart Chain', 'BNB'),
     (728126428 , 'Tron', 'TRX'),
