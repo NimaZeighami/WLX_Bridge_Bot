@@ -2,7 +2,7 @@
 package commands
 
 import (
-	"bridgebot/configs" // or wherever your GetEnv is
+	"bridgebot/configs" 
 	"database/sql"
 	"fmt"
 	log "bridgebot/internal/utils/logger"

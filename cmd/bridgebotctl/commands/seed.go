@@ -1,32 +1,45 @@
 package commands
 
 import (
-	"database/sql"
+	"bridgebot/configs"
 	log "bridgebot/internal/utils/logger"
+	"database/sql"
+	"fmt"
 
+	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var seedCmd = &cobra.Command{
 	Use:   "seed",
-	Short: "Seed the database with initial data",
+	Short: "Apply Goose seed migrations (SQL files)",
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/bridgebot_config?parseTime=true")
+		configs.LoadEnv(".env")
+
+		user := configs.GetEnv("DB_USER", "root")
+		pass := configs.GetEnv("DB_PASS", "@Nima8228")
+		host := configs.GetEnv("DB_HOST", "localhost")
+		port := configs.GetEnv("DB_PORT", "3306")
+		name := configs.GetEnv("DB_NAME", "bridgebot_config")
+
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, pass, host, port, name)
+
+		db, err := sql.Open("mysql", dsn)
 		if err != nil {
-			log.Fatalf("Error opening DB: %v", err)
+			log.Fatalf("Failed to connect to DB: %v", err)
 		}
 		defer db.Close()
 
-		_, err = db.Exec(`
-			INSERT INTO bridge_configurations (token, network, token_contract_address, token_decimals, bridgers_smart_contract_address, is_enabled)
-			VALUES ('USDT', 'POLYGON', '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', 6, '0x1234567890abcdef', true)
-		`)
-		if err != nil {
-			log.Fatalf("Error seeding DB: %v", err)
+		if err := goose.SetDialect("mysql"); err != nil {
+			log.Fatalf("Failed to set Goose dialect: %v", err)
 		}
 
-		log.Info("✅ Database seeded.")
+		if err := goose.Up(db, "internal/database/migrations"); err != nil {
+			log.Fatalf("Seeding failed: %v", err)
+		}
+
+		log.Info("✅ Seed migrations applied successfully.")
 	},
 }
 

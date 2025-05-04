@@ -4,12 +4,11 @@ CREATE TABLE IF NOT EXISTS tokens (
     symbol VARCHAR(100) NOT NULL,
     name VARCHAR(100) NOT NULL,
     network_id INT NOT NULL,
-    contract_address VARCHAR(300) NOT NULL,
+    contract_address VARCHAR(300) DEFAULT '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
     decimals INT NOT NULL,
     is_native BOOLEAN DEFAULT FALSE,
 
 
-    UNIQUE(symbol, network_id),
     INDEX idx_network_id (network_id),
     FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE
 );
