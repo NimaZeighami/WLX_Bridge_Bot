@@ -6,4 +6,5 @@ INSERT INTO networks (chain_id, name, symbol) VALUES
     (137, 'Polygon', 'POL');
 
 -- +goose Down
-DELETE FROM networks WHERE id IN (1, 56, 728126428, 137);
+DELETE FROM networks;
+ALTER TABLE networks AUTO_INCREMENT = 1;
