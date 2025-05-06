@@ -21,7 +21,7 @@ var setupCmd = &cobra.Command{
 		pass := configs.GetEnv("DB_PASS", "")
 		host := configs.GetEnv("DB_HOST", "localhost")
 		port := configs.GetEnv("DB_PORT", "3306")
-		dbName := configs.GetEnv("DB_NAME", "bridgebot_config")
+		dbName := configs.GetEnv("DB_NAME", "bridgebot_core")
 
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/", user, pass, host, port)
 

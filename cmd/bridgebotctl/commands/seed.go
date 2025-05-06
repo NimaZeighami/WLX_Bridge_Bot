@@ -21,7 +21,7 @@ var seedCmd = &cobra.Command{
 		pass := configs.GetEnv("DB_PASS", "")
 		host := configs.GetEnv("DB_HOST", "localhost")
 		port := configs.GetEnv("DB_PORT", "3306")
-		name := configs.GetEnv("DB_NAME", "bridgebot_config")
+		name := configs.GetEnv("DB_NAME", "bridgebot_core")
 
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, pass, host, port, name)
 

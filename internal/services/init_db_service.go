@@ -32,7 +32,7 @@ func InitDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatalf("Error connecting to the database: %v", err)
 	}
-	if err := db.Exec("USE bridgebot_config").Error; err != nil {
+	if err := db.Exec("USE bridgebot_core").Error; err != nil {
 		log.Fatalf("Error switching to database: %v", err)
 	}
 	return db
