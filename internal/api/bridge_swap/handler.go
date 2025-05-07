@@ -110,7 +110,8 @@ func HandleSwap(c echo.Context) error {
 		"fromTokenChain":  req.FromTokenChain,
 		"bridge":          "The Bridgers1",
 		"quoteId":         "1",
-		// ? Note: Decimal values are intentionally omitted from the response to simplify the user experience. 
+		"estimatedTime":   string(quoteResponse.Data.TxData.EstimatedTime),
+		// ? Note: Decimal values are intentionally omitted from the response to simplify the user experience.
 		// ? We get amount without decimal and we ourself send amount with decimal to the bridgers API. and
 		// ? Return the response to the user without decimal values.
 		// "fromTokenDecimal": quoteResponse.Data.TxData.FromTokenDecimal,
