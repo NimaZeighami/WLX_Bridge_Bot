@@ -24,14 +24,22 @@ type QuoteResponse struct {
 	ResMsg  string `json:"resMsg"`
 	Data    struct {
 		TxData struct {
-			FromTokenAmount string `json:"fromTokenAmount"`
-			ToTokenAmount   string `json:"toTokenAmount"`
-			Dex             string `json:"dex"`
-			ContractAddress string `json:"contractAddress"`
-			ChainFee        string `json:"chainFee"`
-			AmountOutMin    string `json:"amountOutMin"`
-			EstimatedTime   int    `json:"estimatedTime"`
-			InstantRate     string `json:"instantRate"`
+			FromTokenAmount   string  `json:"fromTokenAmount"`
+			FromTokenDecimal  int     `json:"fromTokenDecimal"`
+			ToTokenAmount     string  `json:"toTokenAmount"`
+			ToTokenDecimal    int     `json:"toTokenDecimal"`
+			Dex               string  `json:"dex"`
+			Path              []any   `json:"path"`
+			Fee               float64 `json:"fee"`
+			FeeToken          string  `json:"feeToken"`
+			ContractAddress   string  `json:"contractAddress"`
+			LogoURL           string  `json:"logoUrl"`
+			ChainFee          string  `json:"chainFee"`
+			DepositMin        string  `json:"depositMin"`
+			DepositMax        string  `json:"depositMax"`
+			AmountOutMin      string  `json:"amountOutMin"`
+			EstimatedTime     int     `json:"estimatedTime"`
+			InstantRate       string  `json:"instantRate"`
 		} `json:"txData"`
 	} `json:"data"`
 }

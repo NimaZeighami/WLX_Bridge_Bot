@@ -8,7 +8,6 @@ import (
 	"fmt"
 )
 
-
 const (
 	UsdtPolygonTokenAddress = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f" // USDT(POLYGON)
 	UsdtBscTokenAddress     = "0x55d398326f99059ff775485246999027b3197955" // USDT(BSC)
@@ -16,9 +15,9 @@ const (
 
 type SwapService struct{}
 
-type BridgeProvider interface {}
+type BridgeProvider interface{}
 
-func (s *SwapService) ProcessSwap(ctx context.Context, req GetQuoteRequest) (string, string, error)  {
+func (s *SwapService) ProcessSwap(ctx context.Context, req GetQuoteRequest) (*bridgers.QuoteResponse, error) {
 	equipmentNo := services.GenerateEquipmentNo(req.FromWalletAddress)
 
 	quoteReq := bridgers.QuoteRequest{
@@ -36,7 +35,7 @@ func (s *SwapService) ProcessSwap(ctx context.Context, req GetQuoteRequest) (str
 	if err != nil {
 		log.Errorf("failed to fetch quote: %w", err)
 	}
-	log.Infof("Quote Response: %s USDT(BSC) for %s USDT(POLYGON)",
+	log.Infof("Quote Response: %s USDT(BSC) for %s USDT(POLYGON)", "heeeeeeeeeeeeeeeeeeeeeeee",
 		quoteResp.Data.TxData.ToTokenAmount,
 		quoteResp.Data.TxData.FromTokenAmount,
 	)
@@ -62,5 +61,5 @@ func (s *SwapService) ProcessSwap(ctx context.Context, req GetQuoteRequest) (str
 	// 	return "", fmt.Errorf("failed to fetch call data: %w", err)
 	// }
 
-	return quoteResp.Data.TxData.ToTokenAmount, quoteResp.Data.TxData.FromTokenAmount, nil
+	return quoteResp, nil
 }
