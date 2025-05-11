@@ -13,3 +13,7 @@ var rootCmd = &cobra.Command{
 func Execute() error {
 	return rootCmd.Execute()
 }
+
+
+// ! consider that because of relative path, 
+// ! the command will not work if you run it from another directory, so you need to run it from the root of the project
