@@ -64,8 +64,8 @@ func main() {
 		receiverAddr,
 		usdtPolygon,
 		usdtBSC,
-		//quoteRes.Data.TxData.AmountOutMin,  //changing this to lower value helps to get revert later !
-	"19000000000000000000000000",
+		quoteRes.Data.TxData.AmountOutMin,  //changing this to lower value helps to get revert later !
+	// "19000000000000000000000000",
 	)
 	services.ExecuteBridgeTransaction(ctx, callReq)
 

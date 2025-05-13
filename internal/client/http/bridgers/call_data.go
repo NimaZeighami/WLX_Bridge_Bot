@@ -122,7 +122,6 @@ func FetchBridgeCallData(ctx context.Context, request CallDataRequest) (*Polygon
 func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Client, request CallDataRequest, privateKey *ecdsa.PrivateKey) (string, error) {
 	log.Info("Fetching bridge transaction calldata...")
 
-	// Step 1: Get calldata from Bridgers API
 	callData, err := FetchBridgeCallData(ctx, request)
 	if err != nil {
 		return "", fmt.Errorf("error fetching bridge calldata: %v", err)
@@ -134,7 +133,6 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	log.Infof("Bridgers API response: %+v", callData)
 
-	// Step 2: Get wallet details from private key
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -142,24 +140,19 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 	}
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
-	// Step 3: Get nonce for transaction
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		return "", fmt.Errorf("failed to get nonce: %v", err)
 	}
 
-	// Step 4: Set gas price - can use suggested price or fixed price
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
-		// Fallback to a default if suggestion fails
 		gasPrice = big.NewInt(100e9) // 100 Gwei
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
-	// Step 5: Prepare transaction parameters
 	toAddress := common.HexToAddress(callData.Data.TxData.To)
 
-	// Parse value if present, otherwise use 0
 	value := big.NewInt(0)
 	if callData.Data.TxData.Value != "" && callData.Data.TxData.Value != "0" && callData.Data.TxData.Value != "0x0" {
 		value, ok = new(big.Int).SetString(callData.Data.TxData.Value, 0)
@@ -169,10 +162,8 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 		}
 	}
 
-	// Step 6: Get data from response
 	data := common.FromHex(callData.Data.TxData.Data)
 
-	// Step 7: Set gas limit - can estimate or use default
 	gasLimit := uint64(500000) // Default gas limit
 	estimatedGas, err := client.EstimateGas(ctx, ethereum.CallMsg{
 		From:     fromAddress,
@@ -185,27 +176,22 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 	if err != nil {
 		log.Warnf("Gas estimation failed, using default: %v", err)
 	} else {
-		// Add buffer to estimated gas (20%)
 		gasLimit = estimatedGas + (estimatedGas / 5)
 		log.Infof("Estimated gas: %d, using gas limit: %d", estimatedGas, gasLimit)
 	}
 
-	// Step 8: Create transaction
 	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
 
-	// Step 9: Get chain ID for signing
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get network ID: %v", err)
 	}
 
-	// Step 10: Sign transaction
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %v", err)
 	}
 
-	// Step 11: Send transaction
 	err = client.SendTransaction(ctx, signedTx)
 	if err != nil {
 		return "", fmt.Errorf("failed to send transaction: %v", err)
