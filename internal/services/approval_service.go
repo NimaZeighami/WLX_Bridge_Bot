@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	BridgingAmount = 5_000_000 // Amount to approve, get qoute from bridgers and broadcast transaction
+	BridgingAmount = 15_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 )
 
 func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string) bool {
