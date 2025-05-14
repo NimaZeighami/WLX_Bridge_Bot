@@ -6,7 +6,7 @@
 // with a specified token contract to approve a spender address for a required 
 // amount, enabling further operations such as token transfers or bridging.
 
-package orchestration
+package services
 
 import (
 	"bridgebot/configs"
@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	BridgingAmount = 20_000_000 // Amount to approve, get qoute from bridgers and broadcast transaction
+	BridgingAmount = 15_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 )
 
 func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string) bool {
@@ -71,3 +71,4 @@ func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, s
 	log.Infof("Check on PolygonScan: https://polygonscan.com/tx/%s", txHash)
 
 }
+ 

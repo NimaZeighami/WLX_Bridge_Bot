@@ -1,10 +1,4 @@
-// Package orchestration provides functionality for handling and managing 
-// various operations related to token bridging and orchestration logic.
-// This file contains the implementation of the BuildQuoteRequest function, 
-// which is responsible for constructing a QuoteRequest object to facilitate 
-// token bridging between different blockchain networks.
-
-package orchestration
+package services
 
 import (
 	"bridgebot/internal/client/http/bridgers"
@@ -13,6 +7,7 @@ import (
 	"context"
 	"fmt"
 )
+
 func BuildQuoteRequest(userAddr string, from, to database.TokenInfo) bridgers.QuoteRequest {
 	return bridgers.QuoteRequest{
 		FromTokenAddress: from.TokenContractAddress,
@@ -21,7 +16,7 @@ func BuildQuoteRequest(userAddr string, from, to database.TokenInfo) bridgers.Qu
 		FromTokenChain:   "POLYGON",
 		ToTokenChain:     "BSC",
 		UserAddr:         userAddr,
-		EquipmentNo:      generateEquipmentNo(userAddr),
+		EquipmentNo:      GenerateEquipmentNo(userAddr),
 		SourceFlag:       "WLXBridgeApp",
 		SourceType:       "",
 	}
@@ -35,4 +30,3 @@ func RequestQuote(ctx context.Context, req bridgers.QuoteRequest) *bridgers.Quot
 	}
 	return resp
 }
-
