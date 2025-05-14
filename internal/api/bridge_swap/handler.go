@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	log "bridgebot/internal/utils/logger"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -27,8 +28,8 @@ func isAllowed(value string, allowed []string) bool {
 	return false
 }
 
-func HandleSwap(c echo.Context) error {
-	var req GetQuoteRequest
+func HandleQuote(c echo.Context) error {
+	var req QuoteReq
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -82,7 +83,7 @@ func HandleSwap(c echo.Context) error {
 
 	service := SwapService{}
 
-	quoteResponse, err := service.ProcessSwap(c.Request().Context(), req)
+	quoteResponse, err := service.ProcessQuote(c.Request().Context(), req)
 	if err != nil {
 		log.Errorf("Swap failed: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -116,5 +117,11 @@ func HandleSwap(c echo.Context) error {
 		// ? Return the response to the user without decimal values.
 		// "fromTokenDecimal": quoteResponse.Data.TxData.FromTokenDecimal,
 		// "toTokenDecimal":   quoteResponse.Data.TxData.ToTokenDecimal,
+	})
+}
+
+func HandleSwap(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Swap endpoint is not implemented yet",
 	})
 }

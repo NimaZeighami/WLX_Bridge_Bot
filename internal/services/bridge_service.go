@@ -45,6 +45,8 @@ func GenerateEquipmentNo(userAddr string) string {
 	return fmt.Sprintf("%032s", userAddr)
 }
 
+
+
 // ExecuteBridgeTransaction handles the complete bridging process
 func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequest) (string, error) {
 	log.Info("Initiating bridge transaction...")
@@ -96,7 +98,7 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	txHash, err := bridgers.ExecuteBridgersSwapTransaction(ctx, client, request, privateKey)
 	if err != nil {
-		return "", err
+		return "", err  // Handle error from ExecuteBridgersSwapTransaction
 	}
 
 	return txHash, nil

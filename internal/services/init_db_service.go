@@ -46,6 +46,8 @@ func LoadBridgeConfigs(db *gorm.DB) []database.BridgeConfiguration {
 	return bridgeConfigs
 }
 
+
+// TODO: type map[string]map[string] reverse to order
 func BuildTokenMap(bridgeConfigs []database.BridgeConfiguration) map[string]map[string]database.TokenInfo {
 	tokenMap := make(map[string]map[string]database.TokenInfo)
 	for _, config := range bridgeConfigs {
