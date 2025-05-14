@@ -4,13 +4,18 @@ import (
 	"bridgebot/internal/api"
 	"bridgebot/internal/api/bridge_swap"
 	log "bridgebot/internal/utils/logger"
+	// "bridgebot/internal/services"
 )
 
 func main() {
-	e := api.NewServer()
+	log.Info("Starting Bridge Bot...")
+	// TODO: we should create database and send it to handler to use it for db operations(check with pairs table at first and add to quote table and return id)
+	// ctx, cancel := context.WithCancel(context.Background())
+
+	// db := services.InitDatabase()
 
 	log.Info("Starting server on :8080...")
-
+	e := api.NewServer()
 	if err := e.Start(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -19,6 +24,7 @@ func main() {
 }
 
 // ! Without the API server, with the code below the bot will not be able to process requests and execute transactions!
+// ! before running this code, make sure to run migratinos for tables
 
 // package main
 

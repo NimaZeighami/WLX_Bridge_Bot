@@ -1,14 +1,12 @@
 package bridge_swap
 
 import (
+	log "bridgebot/internal/utils/logger"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-
-	log "bridgebot/internal/utils/logger"
-
-	"github.com/labstack/echo/v4"
 )
 
 var universalWalletRegex = regexp.MustCompile(`^[a-zA-Z0-9]{26,64}$`)
