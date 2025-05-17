@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
+	"math"
 	"github.com/labstack/echo/v4"
 )
 
@@ -96,7 +96,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	fromAmountInt := fromAmountDec / quoteResponse.Data.TxData.FromTokenDecimal
+	fromAmountInt := fromAmountDec / int(math.Pow(10, float64(quoteResponse.Data.TxData.FromTokenDecimal)))
 	fromAmount := strconv.Itoa(fromAmountInt)
 
 	return c.JSON(http.StatusOK, map[string]string{
