@@ -20,6 +20,8 @@ type SwapServer struct {
 	DB *gorm.DB
 }
 
+// TODO:  Make ProcessQuote and ProcessSwap methods more generic to handle different bridge providers
+
 type BridgeProvider interface{}
 
 func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.QuoteResponse, uint, error) {
@@ -46,6 +48,9 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		log.Errorf("Invalid token pair: %s-%s to %s-%s", req.FromToken, req.FromTokenChain, req.ToToken, req.ToTokenChain)
 		return nil, 0, fmt.Errorf("invalid token pair")
 	}
+
+	//TODO: make fromTokenAmount to be dynamic based on decimals of the token
+
 	quoteReq := bridgers.QuoteRequest{
 		FromTokenAddress: UsdtPolygonTokenAddress,
 		ToTokenAddress:   UsdtBscTokenAddress,
