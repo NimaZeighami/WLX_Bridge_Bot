@@ -8,6 +8,7 @@ package services
 
 import (
 	"bridgebot/internal/database"
+	"bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ import (
 )
 
 func InitDatabase() *gorm.DB {
-	config := database.DBConfig{
+	config := models.DBConfig{
 		Username: "root",
 		Password: "@Nima8228",
 		Host:     "localhost",
@@ -38,8 +39,8 @@ func InitDatabase() *gorm.DB {
 	return db
 }
 
-func LoadBridgeConfigs(db *gorm.DB) []database.BridgeConfiguration {
-	var bridgeConfigs []database.BridgeConfiguration
+func LoadBridgeConfigs(db *gorm.DB) []models.BridgeConfiguration {
+	var bridgeConfigs []models.BridgeConfiguration
 	if err := db.Find(&bridgeConfigs).Error; err != nil {
 		log.Fatalf("Error fetching bridge configs: %v", err)
 	}
@@ -48,13 +49,13 @@ func LoadBridgeConfigs(db *gorm.DB) []database.BridgeConfiguration {
 
 
 // TODO: type map[string]map[string] reverse to order
-func BuildTokenMap(bridgeConfigs []database.BridgeConfiguration) map[string]map[string]database.TokenInfo {
-	tokenMap := make(map[string]map[string]database.TokenInfo)
+func BuildTokenMap(bridgeConfigs []models.BridgeConfiguration) map[string]map[string]models.TokenInfo {
+	tokenMap := make(map[string]map[string]models.TokenInfo)
 	for _, config := range bridgeConfigs {
 		if _, exists := tokenMap[config.Token]; !exists {
-			tokenMap[config.Token] = make(map[string]database.TokenInfo)
+			tokenMap[config.Token] = make(map[string]models.TokenInfo)
 		}
-		tokenMap[config.Token][config.Network] = database.TokenInfo{
+		tokenMap[config.Token][config.Network] = models.TokenInfo{
 			ChainID:                      config.ChainID,
 			TokenContractAddress:         config.TokenContractAddress,
 			TokenDecimals:                config.TokenDecimals,

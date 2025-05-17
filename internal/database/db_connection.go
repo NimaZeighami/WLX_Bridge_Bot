@@ -5,46 +5,17 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"bridgebot/internal/database/models"
 )
 
 //TODO: These models should be moved to models package
 
-type DBConfig struct {
-	Username string
-	Password string
-	Host     string
-	Port     string
-	Database string
-}
 
-type BridgeConfiguration struct {
-	ID                           uint   `gorm:"primaryKey"`
-	Network                      string `gorm:"not null"`
-	ChainID                      int
-	Token                        string `gorm:"not null"`
-	TokenContractAddress         string `gorm:"not null"`
-	TokenDecimals                int    `gorm:"not null"`
-	BridgersSmartContractAddress string `gorm:"not null"`
-	IsEnabled                    bool   `gorm:"default:true"`
-	CreatedAt                    string `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt                    string `gorm:"default:CURRENT_TIMESTAMP"`
-}
-
-// TokenInfo holds the relevant details for a token on a given network
-type TokenInfo struct {
-	ChainID                      int
-	TokenContractAddress         string
-	TokenDecimals                int
-	BridgersSmartContractAddress string
-	IsEnabled                    bool
-}
-
-var DB *gorm.DB
 
 //TODO: ↑↑↑↑
 
 // Connect initializes the connection to the MySQL server using GORM
-func Connect(config DBConfig) (*gorm.DB, error) {
+func Connect(config models.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.Username, config.Password, config.Host, config.Port, config.Database)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -80,7 +51,7 @@ func UseDatabase(db *gorm.DB) error {
 
 
 // InitializeDatabase connects to the database, creates the database, switches to it, and creates the table using GORM
-func InitializeDatabase(config DBConfig) error {
+func InitializeDatabase(config models.DBConfig) error {
 	db, err := Connect(config)
 	if err != nil {
 		return err

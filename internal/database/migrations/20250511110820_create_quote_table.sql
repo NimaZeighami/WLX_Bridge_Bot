@@ -9,7 +9,6 @@ CREATE TABLE quotes (
     to_address VARCHAR(100) NOT NULL,
     from_amount DECIMAL(65, 0) NOT NULL,
     to_amount_min DECIMAL(65, 0) NOT NULL,
-    slippage FLOAT NOT NULL,
     tx_hash VARCHAR(100),
     state ENUM('pending', 'submitted', 'confirmed', 'failed', 'expired', 'success') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -30,7 +29,7 @@ CREATE TABLE quotes (
 -- failed
 -- → Transaction failed (e.g., out of gas, user rejected, on-chain error).
 
--- expired (optional)
+-- expired
 -- → Quote was not used within its valid window (often quotes are valid for a short time like 30s).
 
 -- success

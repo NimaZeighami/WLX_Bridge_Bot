@@ -2,11 +2,12 @@ package bridge_swap
 
 import (
 	log "bridgebot/internal/utils/logger"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 var universalWalletRegex = regexp.MustCompile(`^[a-zA-Z0-9]{26,64}$`)
@@ -26,7 +27,7 @@ func isAllowed(value string, allowed []string) bool {
 	return false
 }
 
-func HandleQuote(c echo.Context) error {
+func (s *SwapServer) HandleQuote(c echo.Context) error {
 	var req QuoteReq
 
 	if err := c.Bind(&req); err != nil {
@@ -79,9 +80,7 @@ func HandleQuote(c echo.Context) error {
 
 	log.Infof("Received swap request: %+v", req)
 
-	service := SwapService{}
-
-	quoteResponse, err := service.ProcessQuote(c.Request().Context(), req)
+	quoteResponse,quoteId, err := s.ProcessQuote(c.Request().Context(), req)
 	if err != nil {
 		log.Errorf("Swap failed: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -108,8 +107,8 @@ func HandleQuote(c echo.Context) error {
 		"fromToken":       req.FromToken,
 		"fromTokenChain":  req.FromTokenChain,
 		"bridge":          "The Bridgers1",
-		"quoteId":         "1",
-		"estimatedTime":   string(quoteResponse.Data.TxData.EstimatedTime),
+		"quoteId":         strconv.FormatUint(uint64(quoteId), 10),
+		"estimatedTime":   strconv.FormatUint(uint64(quoteResponse.Data.TxData.EstimatedTime), 10),
 		// ? Note: Decimal values are intentionally omitted from the response to simplify the user experience.
 		// ? We get amount without decimal and we ourself send amount with decimal to the bridgers API. and
 		// ? Return the response to the user without decimal values.
@@ -118,7 +117,7 @@ func HandleQuote(c echo.Context) error {
 	})
 }
 
-func HandleSwap(c echo.Context) error {
+func (s *SwapServer) HandleSwap(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Swap endpoint is not implemented yet",
 	})

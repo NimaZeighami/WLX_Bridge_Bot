@@ -1,31 +1,32 @@
 package api
 
 import (
-    "bridgebot/internal/api/bridge_swap"
-    "github.com/go-playground/validator/v10"
-    "github.com/labstack/echo/v4"
-    "github.com/labstack/echo/v4/middleware"
+	"bridgebot/internal/api/bridge_swap"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type CustomValidator struct {
-    validator *validator.Validate
+	validator *validator.Validate
 }
 
 func (cv *CustomValidator) Validate(i interface{}) error {
-    return cv.validator.Struct(i)
+	return cv.validator.Struct(i)
 }
 
-func NewServer() *echo.Echo {
-    e := echo.New()
+func NewServer(swapServer *bridge_swap.SwapServer) *echo.Echo {
+	e := echo.New()
 
-    e.Use(middleware.Logger())
-    e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-    e.Validator = &CustomValidator{validator: validator.New()}
+	e.Validator = &CustomValidator{validator: validator.New()}
 
-    e.POST("/v1/getQuote", bridge_swap.HandleQuote)
+	e.POST("/v1/getQuote",  swapServer.HandleQuote)
 
-    e.POST("/v1/swap",bridge_swap.HandleSwap)
+	e.POST("/v1/swap", swapServer.HandleSwap)
 
-    return e
+	return e
 }

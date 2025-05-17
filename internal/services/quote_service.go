@@ -2,13 +2,13 @@ package services
 
 import (
 	"bridgebot/internal/client/http/bridgers"
-	"bridgebot/internal/database"
+	"bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
 )
 
-func BuildQuoteRequest(userAddr string, from, to database.TokenInfo) bridgers.QuoteRequest {
+func BuildQuoteRequest(userAddr string, from, to models.TokenInfo) bridgers.QuoteRequest {
 	return bridgers.QuoteRequest{
 		FromTokenAddress: from.TokenContractAddress,
 		ToTokenAddress:   to.TokenContractAddress,

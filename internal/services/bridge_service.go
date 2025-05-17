@@ -4,7 +4,7 @@ import (
 	"bridgebot/configs"
 	"bridgebot/internal/blockchain/polygon"
 	"bridgebot/internal/client/http/bridgers"
-	"bridgebot/internal/database"
+	"bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"crypto/ecdsa"
@@ -18,7 +18,7 @@ import (
 
 
 // BuildCalldataRequest constructs a CallDataRequest based on token info and bridge response data.
-func BuildCalldataRequest(userAddr, receiverAddr string, from, to database.TokenInfo, amountOutMin string) bridgers.CallDataRequest {
+func BuildCalldataRequest(userAddr, receiverAddr string, from, to models.TokenInfo, amountOutMin string) bridgers.CallDataRequest {
 	return bridgers.CallDataRequest{
 		FromTokenAddress: from.TokenContractAddress,
 		ToTokenAddress:   to.TokenContractAddress,
@@ -104,7 +104,7 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 	return txHash, nil
 }
 
-func ExecuteFullBridgeProcess(ctx context.Context, userAddr string, from, to database.TokenInfo) (string, error) {
+func ExecuteFullBridgeProcess(ctx context.Context, userAddr string, from, to models.TokenInfo) (string, error) {
 	amountOutMin := calculateAmountOutMin(BridgingAmount, 0.002) // 0.2% slippage
 	
 	request := BuildCalldataRequest(userAddr, userAddr, from, to, amountOutMin)
