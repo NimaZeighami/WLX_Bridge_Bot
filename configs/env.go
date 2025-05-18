@@ -2,6 +2,7 @@ package configs
 
 import (
 	log "bridgebot/internal/utils/logger"
+	"fmt"
 	"github.com/joho/godotenv"
 	"os"
 )
@@ -14,9 +15,16 @@ func GetRpcURL() string {
 	return os.Getenv("POLYGON_RPC_URL")
 }
 
+
+// GetBridgersContractAddr returns the contract address for the given network symbol.
+// The network parameter should be provided in uppercase (e.g., "ETH", "BSC").
+func GetBridgersContractAddr(networkSymbol string) string {
+	return os.Getenv(fmt.Sprintf("THE_BRIDGERS_%s_CONTRACT_ADDRESS", networkSymbol))
+}
+
 // LoadEnv loads the .env file from the configs directory
 func LoadEnv(envFilePath string) {
-	err := godotenv.Load(envFilePath) 
+	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Errorf("Error loading .env file: %v", err)
 	}

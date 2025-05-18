@@ -10,7 +10,6 @@ import (
 
 func main() {
 	log.Info("Starting Bridge Bot...")
-	// TODO: we should create database and send it to handler to use it for db operations(check with pairs table at first and add to quote table and return id)
 	// ctx, cancel := context.WithCancel(context.Background())
 
 	db := services.InitDatabase()
@@ -31,10 +30,15 @@ func main() {
 // package main
 
 // import (
+// 	"bridgebot/configs"
+// 	"bridgebot/internal/contracts"
 // 	"bridgebot/internal/services"
 // 	log "bridgebot/internal/utils/logger"
 // 	"context"
+// 	"math/big"
 // )
+
+// const BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 
 // func main() {
 // 	log.Info("Starting Bridge Bot...")
@@ -43,17 +47,10 @@ func main() {
 // 	defer cancel()
 // 	services.SetupSignalHandler(cancel)
 
-// 	db := services.InitDatabase()
-// 	bridgeConfigs := services.LoadBridgeConfigs(db)
-// 	tokenMap := services.BuildTokenMap(bridgeConfigs)
-
 // 	userAddr := "0x7d0F13148e85A53227c65Ed013E7961A67839858"
 // 	receiverAddr := userAddr
 
-// 	usdtBSC := tokenMap["USDT"]["BSC"]
-// 	usdtPolygon := tokenMap["USDT"]["POL"]
-
-// 	quoteReq := services.BuildQuoteRequest(userAddr, usdtPolygon, usdtBSC)
+// 	quoteReq := services.BuildQuoteRequest(userAddr, contracts.USDT_POLYGON_Addr, contracts.USDT_BSC_Addr)
 // 	quoteRes := services.RequestQuote(ctx, quoteReq)
 
 // 	log.Infof("Quote Response: %s USDT(BSC) for %s USDT(POLYGON)",
@@ -61,20 +58,22 @@ func main() {
 // 		quoteRes.Data.TxData.FromTokenAmount,
 // 	)
 
-// 	isApprovalNeeded := services.CheckPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress)
+// 	bridgeAmount := big.NewInt(BridgingAmount)
+
+// 	isApprovalNeeded := services.CheckPolygonApproval(ctx, userAddr, contracts.USDT_POLYGON_Addr, bridgeAmount)
 // 	if isApprovalNeeded {
-// 		services.SubmitPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress, usdtPolygon.BridgersSmartContractAddress)
+// 		services.SubmitPolygonApproval(ctx, userAddr, contracts.USDT_POLYGON_Addr, configs.GetBridgersContractAddr("POLYGON"), bridgeAmount)
 // 	}
 
 // 	callReq := services.BuildCalldataRequest(
 // 		userAddr,
 // 		receiverAddr,
-// 		usdtPolygon,
-// 		usdtBSC,
-// 		quoteRes.Data.TxData.AmountOutMin,  //changing this to lower value helps to get revert later !
-// 	// "19000000000000000000000000",
+// 		contracts.USDT_POLYGON_Addr,
+// 		contracts.USDT_BSC_Addr,
+// 		quoteRes.Data.TxData.AmountOutMin, //changing this to lower value helps to get revert later !		// "19000000000000000000000000",
+// 		bridgeAmount,
 // 	)
-// 	txHash, err :=services.ExecuteBridgeTransaction(ctx, callReq)
+// 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
 // 	if err != nil {
 // 		log.Errorf("Error executing bridge transaction: %v", err)
 // 	} else {

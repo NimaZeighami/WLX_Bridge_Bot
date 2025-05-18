@@ -116,6 +116,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		GasPrice: gasPrice,
 	}
 
+	// TODO: Check this
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
 		// If estimation fails, use a default gas limit
@@ -242,81 +243,4 @@ func BatchApprove(client *ethclient.Client, items []BatchApprovalItem, privateKe
 		txHashes = append(txHashes, txHash)
 	}
 	return txHashes, nil
-}
-
-// SignTransaction signs a given unsigned transaction using the provided private key.
-// This function does not broadcast the transaction.
-func SignTransaction(client *ethclient.Client, tx *types.Transaction, privateKey *ecdsa.PrivateKey) (*types.Transaction, error) {
-	ctx := context.Background()
-	chainID, err := client.NetworkID(ctx)
-	if err != nil {
-		chainID = big.NewInt(137)
-		log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
-	}
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign transaction: %w", err)
-	}
-	return signedTx, nil
-}
-
-// BroadcastTransaction sends a pre-signed transaction to the network.
-func BroadcastTransaction(client *ethclient.Client, signedTx *types.Transaction) (string, error) {
-	ctx := context.Background()
-	if err := client.SendTransaction(ctx, signedTx); err != nil {
-		return "", fmt.Errorf("failed to broadcast transaction: %w", err)
-	}
-	return signedTx.Hash().Hex(), nil
-}
-
-// BroadcastTransactionWithCalldata builds, signs, and broadcasts a transaction using custom calldata.
-func BroadcastTransactionWithCalldata(client *ethclient.Client, to common.Address, calldata []byte, privateKey *ecdsa.PrivateKey) (string, error) {
-	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-	return signAndSendTx(context.Background(), client, fromAddress, to, calldata, privateKey)
-}
-
-// BroadcastTransactionWithCalldataWithGas signs and sends a transaction using the given gas price.
-func BroadcastTransactionWithCalldataWithGas(
-	ctx context.Context,
-	client *ethclient.Client,
-	to common.Address,
-	calldata []byte,
-	privateKey *ecdsa.PrivateKey,
-	gasPrice *big.Int,
-) (string, error) {
-	from := crypto.PubkeyToAddress(privateKey.PublicKey)
-
-	nonce, err := client.PendingNonceAt(ctx, from)
-	if err != nil {
-		return "", err
-	}
-
-	msg := ethereum.CallMsg{
-		From:     from,
-		To:       &to,
-		GasPrice: gasPrice,
-		Data:     calldata,
-	}
-	gasLimit, err := client.EstimateGas(ctx, msg)
-	if err != nil {
-		gasLimit = 100000 // fallback
-	}
-
-	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, calldata)
-
-	chainID, err := client.NetworkID(ctx)
-	if err != nil {
-		chainID = big.NewInt(137) // default to Polygon
-	}
-
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	if err := client.SendTransaction(ctx, signedTx); err != nil {
-		return "", err
-	}
-
-	return signedTx.Hash().Hex(), nil
 }
