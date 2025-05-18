@@ -4,7 +4,7 @@ import (
 	"bridgebot/configs"
 	"bridgebot/internal/blockchain/polygon"
 	"bridgebot/internal/client/http/bridgers"
-	"bridgebot/internal/database/models"
+	// "bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"crypto/ecdsa"
@@ -24,16 +24,16 @@ func GenerateEquipmentNo(userAddr string) string {
 }
 
 // BuildCalldataRequest constructs a CallDataRequest based on token info and bridge response data.
-func BuildCalldataRequest(userAddr, receiverAddr string, from, to models.TokenInfo, amountOutMin string,/* amount *big.Int */) bridgers.CallDataRequest {
+func BuildCalldataRequest(userAddr, receiverAddr string, fromTokenAddr, toTokenAddr string, amountOutMin string, amount *big.Int) bridgers.CallDataRequest {
 	return bridgers.CallDataRequest{
-		FromTokenAddress: from.TokenContractAddress,
-		ToTokenAddress:   to.TokenContractAddress,
+		FromTokenAddress: fromTokenAddr,
+		ToTokenAddress:   toTokenAddr,
 		FromAddress:      userAddr,
 		ToAddress:        receiverAddr,
 		FromTokenChain:   "POLYGON",
 		ToTokenChain:     "BSC",
-		FromTokenAmount:  fmt.Sprintf("%d", BridgingAmount),
-		// FromTokenAmount: fmt.Sprintf("%d", amount),
+		// FromTokenAmount:  fmt.Sprintf("%d", BridgingAmount),
+		FromTokenAmount: fmt.Sprintf("%d", amount),
 		AmountOutMin:    amountOutMin,
 		FromCoinCode:    "USDT(POL)",
 		ToCoinCode:      "USDT(BSC)",
@@ -71,7 +71,7 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	// ! Uncomment this if we need use without API verion ↓↓↓
 	spenderAddress := common.HexToAddress("0xb685760ebd368a891f27ae547391f4e2a289895b") // Bridge contract
-	tokenAddress := common.HexToAddress(polygon.TokenAddress) // USDT contract
+	tokenAddress := common.HexToAddress(polygon.TokenAddress)                           // USDT contract
 	amount := big.NewInt(BridgingAmount)
 
 	needsApproval, err := polygon.IsApprovalNeeded(client, tokenAddress, fromAddress, spenderAddress, amount)
@@ -96,7 +96,7 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	txHash, err := bridgers.ExecuteBridgersSwapTransaction(ctx, client, request, privateKey)
 	if err != nil {
-		return "", err 
+		return "", err
 	}
 
 	return txHash, nil

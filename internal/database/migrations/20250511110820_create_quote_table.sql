@@ -21,7 +21,7 @@ CREATE TABLE quotes (
 
 -- States for 
 
--- pending
+-- pending  (created)
 -- → Quote has been created, but no transaction yet.
 
 -- submitted 

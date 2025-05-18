@@ -21,14 +21,14 @@ const (
 	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 )
 
-func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string, /*requiredAmount *big.Int */) bool {
+func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddress string, requiredAmount *big.Int) bool {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
 	}
-	tokenAddress := common.HexToAddress(tokenAddressStr)
+	tokenAddress := common.HexToAddress(TokenContractAddress)
 	spender := common.HexToAddress(owner)
-	requiredAmount := big.NewInt(BridgingAmount)
+	// requiredAmount := big.NewInt(BridgingAmount)
 
 	log.Info("Checking if approval is needed...")
 	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(owner), spender, requiredAmount)
@@ -44,7 +44,7 @@ func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr str
 	return isNeeded
 }
 
-func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, spenderAddress string, /*requiredAmount *big.Int */ ) error {
+func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddress, spenderAddress string, requiredAmount *big.Int) error {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
@@ -58,9 +58,9 @@ func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, s
 		log.Fatalf("Failed to convert private key: %v", err)
 		return err
 	}
-	tokenAddress := common.HexToAddress(tokenAddressStr)
+	tokenAddress := common.HexToAddress(TokenContractAddress)
 	spender := common.HexToAddress(spenderAddress)
-	requiredAmount := big.NewInt(BridgingAmount)
+	// requiredAmount := big.NewInt(BridgingAmount)
 
 	txHash, err := polygon.ApproveContract(client, tokenAddress, spender, requiredAmount, privateKey)
 	if err != nil {

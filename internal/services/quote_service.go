@@ -2,16 +2,16 @@ package services
 
 import (
 	"bridgebot/internal/client/http/bridgers"
-	"bridgebot/internal/database/models"
+	// "bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
 )
 
-func BuildQuoteRequest(userAddr string, from, to models.TokenInfo) bridgers.QuoteRequest {
+func BuildQuoteRequest(userAddr string, fromTokenAddr, toTokenAddr string) bridgers.QuoteRequest {
 	return bridgers.QuoteRequest{
-		FromTokenAddress: from.TokenContractAddress,
-		ToTokenAddress:   to.TokenContractAddress,
+		FromTokenAddress: fromTokenAddr,
+		ToTokenAddress:   toTokenAddr,
 		FromTokenAmount:  fmt.Sprintf("%d", BridgingAmount),
 		FromTokenChain:   "POLYGON",
 		ToTokenChain:     "BSC",

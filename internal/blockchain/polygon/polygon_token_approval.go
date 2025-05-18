@@ -116,6 +116,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		GasPrice: gasPrice,
 	}
 
+	// TODO: Check this
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
 		// If estimation fails, use a default gas limit

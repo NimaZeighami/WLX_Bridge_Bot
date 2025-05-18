@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"math"
-	// "math/big"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -119,7 +119,7 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		FromAddress:      quoteReq.UserAddr,
 		ToAddress:        req.ToWalletAddress,
 		FromAmount:       quoteReq.FromTokenAmount,
-		ToAmountMin:      quoteResp.Data.TxData.ToTokenAmount,
+		ToAmountMin:      quoteResp.Data.TxData.AmountOutMin,
 		TxHash:           "",
 		State:            "pending", // initial state , other states can be submitted, confirmed, failed, expired and success.
 	}
@@ -137,17 +137,17 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 		return "", fmt.Errorf("quote not found")
 	}
 	// ! Uncomment
-	// fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
-	// if err != nil {
-	// 	return "", fmt.Errorf("invalid from amount: %v", err)
-	// }
-	// fromAmount := big.NewInt(fromAmountInt)
+	fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid from amount: %v", err)
+	}
+	fromAmount := big.NewInt(fromAmountInt)
 
-	// TODO: like Polygon we should check chain and based on that have approval
+	// TODO: like Polygon we should check chain and based on that have approval (Switch-Case)
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
-		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress /*, fromAmount*/)
+		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, fromAmount)
 		if isApprovalNeeded {
-			err := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress /*, fromAmount */)
+			err := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
 			if err != nil {
 				s.DB.Model(&quote).Update("state", "failed")
 				return "", fmt.Errorf("approval failed: %v", err)
@@ -155,23 +155,19 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 		}
 	}
 
-	fromToken := models.TokenInfo{
-		TokenContractAddress:         quote.FromTokenAddress,
-		BridgersSmartContractAddress: "",
-	}
+	fromToken := quote.FromTokenAddress
 
-	toToken := models.TokenInfo{
-		TokenContractAddress:         quote.ToTokenAddress,
-		BridgersSmartContractAddress: "",
-	}
+
+	toToken := quote.ToTokenAddress
+
 
 	callReq := services.BuildCalldataRequest(
 		quote.FromAddress,
 		quote.ToAddress,
 		fromToken,
 		toToken,
-		quote.ToAmountMin,
-		/*fromAmount*/)
+		quote.ToAmountMin, // TODO: toAmountMin has wrong value in database it is equal to fromAmount and it should fixed 
+		fromAmount)
 
 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
 	if err != nil {
