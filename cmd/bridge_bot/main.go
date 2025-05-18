@@ -1,86 +1,85 @@
-package main
-
-import (
-	"bridgebot/internal/api"
-	"bridgebot/internal/api/bridge_swap"
-	"bridgebot/internal/services"
-	log "bridgebot/internal/utils/logger"
-	// "context"
-)
-
-func main() {
-	log.Info("Starting Bridge Bot...")
-	// TODO: we should create database and send it to handler to use it for db operations(check with pairs table at first and add to quote table and return id)
-	// ctx, cancel := context.WithCancel(context.Background())
-
-	db := services.InitDatabase()
-	swapServer  := &bridge_swap.SwapServer{DB: db}
-
-	log.Info("Starting server on :8080...")
-	e := api.NewServer(swapServer)
-	if err := e.Start(":8080"); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
-	log.Infof("%#v", bridge_swap.QuoteReq{})
-	log.Infof("%#v", bridge_swap.QuoteRes{})
-}
-
-// ! Without the API server, with the code below the bot will not be able to process requests and execute transactions!
-// ! before running this code, make sure to run migratinos for tables
-
 // package main
 
 // import (
+// 	"bridgebot/internal/api"
+// 	"bridgebot/internal/api/bridge_swap"
 // 	"bridgebot/internal/services"
 // 	log "bridgebot/internal/utils/logger"
-// 	"context"
+// 	// "context"
 // )
 
 // func main() {
 // 	log.Info("Starting Bridge Bot...")
-
-// 	ctx, cancel := context.WithCancel(context.Background())
-// 	defer cancel()
-// 	services.SetupSignalHandler(cancel)
+// 	// ctx, cancel := context.WithCancel(context.Background())
 
 // 	db := services.InitDatabase()
-// 	bridgeConfigs := services.LoadBridgeConfigs(db)
-// 	tokenMap := services.BuildTokenMap(bridgeConfigs)
+// 	swapServer  := &bridge_swap.SwapServer{DB: db}
 
-// 	userAddr := "0x7d0F13148e85A53227c65Ed013E7961A67839858"
-// 	receiverAddr := userAddr
-
-// 	usdtBSC := tokenMap["USDT"]["BSC"]
-// 	usdtPolygon := tokenMap["USDT"]["POL"]
-
-// 	quoteReq := services.BuildQuoteRequest(userAddr, usdtPolygon, usdtBSC)
-// 	quoteRes := services.RequestQuote(ctx, quoteReq)
-
-// 	log.Infof("Quote Response: %s USDT(BSC) for %s USDT(POLYGON)",
-// 		quoteRes.Data.TxData.ToTokenAmount,
-// 		quoteRes.Data.TxData.FromTokenAmount,
-// 	)
-
-// 	isApprovalNeeded := services.CheckPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress)
-// 	if isApprovalNeeded {
-// 		services.SubmitPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress, usdtPolygon.BridgersSmartContractAddress)
+// 	log.Info("Starting server on :8080...")
+// 	e := api.NewServer(swapServer)
+// 	if err := e.Start(":8080"); err != nil {
+// 		log.Fatalf("Failed to start server: %v", err)
 // 	}
-
-// 	callReq := services.BuildCalldataRequest(
-// 		userAddr,
-// 		receiverAddr,
-// 		usdtPolygon,
-// 		usdtBSC,
-// 		quoteRes.Data.TxData.AmountOutMin,  //changing this to lower value helps to get revert later !
-// 	// "19000000000000000000000000",
-// 	)
-// 	txHash, err :=services.ExecuteBridgeTransaction(ctx, callReq)
-// 	if err != nil {
-// 		log.Errorf("Error executing bridge transaction: %v", err)
-// 	} else {
-// 		log.Infof("Transaction sent: %s", txHash)
-// 	}
+// 	log.Infof("%#v", bridge_swap.QuoteReq{})
+// 	log.Infof("%#v", bridge_swap.QuoteRes{})
 // }
+
+// ! Without the API server, with the code below the bot will not be able to process requests and execute transactions!
+// ! before running this code, make sure to run migratinos for tables
+
+package main
+
+import (
+	"bridgebot/internal/services"
+	log "bridgebot/internal/utils/logger"
+	"context"
+)
+
+func main() {
+	log.Info("Starting Bridge Bot...")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	services.SetupSignalHandler(cancel)
+
+	db := services.InitDatabase()
+	bridgeConfigs := services.LoadBridgeConfigs(db)
+	tokenMap := services.BuildTokenMap(bridgeConfigs)
+
+	userAddr := "0x7d0F13148e85A53227c65Ed013E7961A67839858"
+	receiverAddr := userAddr
+
+	usdtBSC := tokenMap["USDT"]["BSC"]
+	usdtPolygon := tokenMap["USDT"]["POL"]
+
+	quoteReq := services.BuildQuoteRequest(userAddr, usdtPolygon, usdtBSC)
+	quoteRes := services.RequestQuote(ctx, quoteReq)
+
+	log.Infof("Quote Response: %s USDT(BSC) for %s USDT(POLYGON)",
+		quoteRes.Data.TxData.ToTokenAmount,
+		quoteRes.Data.TxData.FromTokenAmount,
+	)
+
+	isApprovalNeeded := services.CheckPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress)
+	if isApprovalNeeded {
+		services.SubmitPolygonApproval(ctx, userAddr, usdtPolygon.TokenContractAddress, usdtPolygon.BridgersSmartContractAddress)
+	}
+
+	callReq := services.BuildCalldataRequest(
+		userAddr,
+		receiverAddr,
+		usdtPolygon,
+		usdtBSC,
+		quoteRes.Data.TxData.AmountOutMin,  //changing this to lower value helps to get revert later !
+	// "19000000000000000000000000",
+	)
+	txHash, err :=services.ExecuteBridgeTransaction(ctx, callReq)
+	if err != nil {
+		log.Errorf("Error executing bridge transaction: %v", err)
+	} else {
+		log.Infof("Transaction sent: %s", txHash)
+	}
+}
 
 // * NoteBook
 

@@ -2,18 +2,18 @@ package bridge_swap
 
 import (
 	"bridgebot/internal/client/http/bridgers"
+	"bridgebot/internal/contracts"
 	"bridgebot/internal/database/models"
 	"bridgebot/internal/services"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
-	"gorm.io/gorm"
+	"math"
+	// "math/big"
+	"strconv"
 	"strings"
-)
 
-const (
-	UsdtPolygonTokenAddress = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f" // USDT(POLYGON)
-	UsdtBscTokenAddress     = "0x55d398326f99059ff775485246999027b3197955" // USDT(BSC)
+	"gorm.io/gorm"
 )
 
 type SwapServer struct {
@@ -22,7 +22,43 @@ type SwapServer struct {
 
 // TODO:  Make ProcessQuote and ProcessSwap methods more generic to handle different bridge providers
 
-type BridgeProvider interface{}
+type BridgeProvider interface {
+	Quote()
+	Bridge()
+}
+
+//  TODO: Implement BridgeProvider Interface for each of them
+//* ADD sturct and these 2 method for  The Bridgers and other bridge providers for implementing BridgeProvider Interface
+
+var ChainsDecimal = map[string]int{
+	"BSC":     contracts.USDT_BSC_Decimal,
+	"ETH":     contracts.USDT_BSC_Decimal,
+	"POLYGON": contracts.USDT_POLYGON_Decimal,
+	"TRX":     contracts.USDT_TRC20_Decimal,
+}
+
+var USDTContractAdresses = map[string]string{
+	"BSC":     contracts.USDT_BSC_Addr,
+	"ETH":     contracts.USDT_BSC_Addr,
+	"POLYGON": contracts.USDT_POLYGON_Addr,
+	"TRX":     contracts.USDT_TRC20_Addr,
+}
+
+// ChainDecimal returns the decimal precision for the given chain symbol.
+func ChainDecimal(chainSymbol string) int {
+	if decimal, ok := ChainsDecimal[chainSymbol]; ok {
+		return decimal
+	}
+	return 0
+}
+
+// USDTContractAdress returns the contract address for the given chain symbol.
+func USDTContractAdress(chainSymbol string) string {
+	if contractAddress, ok := USDTContractAdresses[chainSymbol]; ok {
+		return contractAddress
+	}
+	return ""
+}
 
 func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.QuoteResponse, uint, error) {
 	equipmentNo := services.GenerateEquipmentNo(req.FromWalletAddress)
@@ -49,17 +85,24 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		return nil, 0, fmt.Errorf("invalid token pair")
 	}
 
-	//TODO: make fromTokenAmount to be dynamic based on decimals of the token
+	// Handling TokenDecimal and return in string type
+	fromAmount := float64(req.FromTokenAmount) * math.Pow(10, float64(ChainDecimal(req.FromTokenChain)))
+	fromAmountStr := strconv.FormatFloat(fromAmount, 'f', -1, 64)
+
+	log.Warnf("From Amount: %v", fromAmountStr)
+
+	fromTokenAddr := USDTContractAdress(req.FromTokenChain)
+	toTokenAddr := USDTContractAdress(req.ToTokenChain)
 
 	quoteReq := bridgers.QuoteRequest{
-		FromTokenAddress: UsdtPolygonTokenAddress,
-		ToTokenAddress:   UsdtBscTokenAddress,
-		FromTokenAmount:  fmt.Sprintf("%.0f000000", req.FromTokenAmount),
-		FromTokenChain:   "POLYGON",
-		ToTokenChain:     "BSC",
+		FromTokenAddress: fromTokenAddr,
+		ToTokenAddress:   toTokenAddr,
+		FromTokenAmount:  fromAmountStr,
+		FromTokenChain:   req.FromTokenChain,
+		ToTokenChain:     req.ToTokenChain,
 		UserAddr:         req.FromWalletAddress,
 		EquipmentNo:      equipmentNo,
-		SourceFlag:       "bridgebot",
+		SourceFlag:       "WBB",
 	}
 
 	quoteResp, err := bridgers.RequestQuote(ctx, quoteReq)
@@ -67,6 +110,7 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		log.Errorf("failed to fetch quote: %w", err)
 		return nil, 0, fmt.Errorf("failed to fetch quote")
 	}
+	// TODO: Tokens table can be omit because it is additional
 	quote := models.Quote{
 		FromTokenAddress: quoteReq.FromTokenAddress,
 		ToTokenAddress:   quoteReq.ToTokenAddress,
@@ -87,23 +131,61 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 	return quoteResp, quote.ID, nil
 }
 
-func (s *SwapServer) ProcessSwap(ctx context.Context, req QuoteReq) (*bridgers.QuoteResponse, error) {
-	equipmentNo := services.GenerateEquipmentNo(req.FromWalletAddress)
+func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, error) {
+	var quote models.Quote
+	if err := s.DB.First(&quote, quoteID).Error; err != nil {
+		return "", fmt.Errorf("quote not found")
+	}
+	// ! Uncomment
+	// fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
+	// if err != nil {
+	// 	return "", fmt.Errorf("invalid from amount: %v", err)
+	// }
+	// fromAmount := big.NewInt(fromAmountInt)
 
-	calldataReq := bridgers.QuoteRequest{
-		FromTokenAddress: UsdtPolygonTokenAddress,
-		ToTokenAddress:   UsdtBscTokenAddress,
-		FromTokenAmount:  fmt.Sprintf("%.0f000000", req.FromTokenAmount),
-		FromTokenChain:   "POLYGON",
-		ToTokenChain:     "BSC",
-		UserAddr:         req.FromWalletAddress,
-		EquipmentNo:      equipmentNo,
-		SourceFlag:       "bridgebot",
+	// TODO: like Polygon we should check chain and based on that have approval
+	if strings.ToUpper(quote.FromChain) == "POLYGON" {
+		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress /*, fromAmount*/)
+		if isApprovalNeeded {
+			err := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress /*, fromAmount */)
+			if err != nil {
+				s.DB.Model(&quote).Update("state", "failed")
+				return "", fmt.Errorf("approval failed: %v", err)
+			}
+		}
 	}
 
-	quoteResp, err := bridgers.RequestQuote(ctx, calldataReq)
+	fromToken := models.TokenInfo{
+		TokenContractAddress:         quote.FromTokenAddress,
+		BridgersSmartContractAddress: "",
+	}
+
+	toToken := models.TokenInfo{
+		TokenContractAddress:         quote.ToTokenAddress,
+		BridgersSmartContractAddress: "",
+	}
+
+	callReq := services.BuildCalldataRequest(
+		quote.FromAddress,
+		quote.ToAddress,
+		fromToken,
+		toToken,
+		quote.ToAmountMin,
+		/*fromAmount*/)
+
+	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
 	if err != nil {
-		log.Errorf("failed to fetch quote: %w", err)
+		s.DB.Model(&quote).Updates(map[string]interface{}{
+			"state":   "failed",
+			"tx_hash": "",
+		})
+		return "", fmt.Errorf("transaction failed: %v", err)
 	}
-	return quoteResp, nil
+
+	s.DB.Model(&quote).Updates(map[string]interface{}{
+		"state":   "submitted",
+		"tx_hash": txHash,
+	})
+
+	return txHash, nil
 }

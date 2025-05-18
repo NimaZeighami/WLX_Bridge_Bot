@@ -1,9 +1,7 @@
-// Package orchestration provides functionality for handling various operations 
-// related to blockchain interactions and approvals.
-//
-// This file contains the SubmitPolygonApproval function, which is responsible 
-// for submitting an approval transaction on the Polygon blockchain. It interacts 
-// with a specified token contract to approve a spender address for a required 
+// File Name: approval_service.go
+// This file contains the SubmitPolygonApproval function, which is responsible
+// for submitting an approval transaction on the Polygon blockchain. It interacts
+// with a specified token contract to approve a spender address for a required
 // amount, enabling further operations such as token transfers or bridging.
 
 package services
@@ -20,10 +18,10 @@ import (
 )
 
 const (
-	BridgingAmount = 15_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
+	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 )
 
-func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string) bool {
+func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr string, /*requiredAmount *big.Int */) bool {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
@@ -46,10 +44,11 @@ func CheckPolygonApproval(ctx context.Context, owner string, tokenAddressStr str
 	return isNeeded
 }
 
-func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, spenderAddress string) {
+func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, spenderAddress string, /*requiredAmount *big.Int */ ) error {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
+		return err
 	}
 
 	privateKeyHex := configs.GetPrivateKeyHex()
@@ -57,6 +56,7 @@ func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, s
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)
 	if err != nil {
 		log.Fatalf("Failed to convert private key: %v", err)
+		return err
 	}
 	tokenAddress := common.HexToAddress(tokenAddressStr)
 	spender := common.HexToAddress(spenderAddress)
@@ -65,10 +65,11 @@ func SubmitPolygonApproval(ctx context.Context, owner string, tokenAddressStr, s
 	txHash, err := polygon.ApproveContract(client, tokenAddress, spender, requiredAmount, privateKey)
 	if err != nil {
 		log.Fatalf("Error approving contract: %v", err)
+		return err
 	}
 
 	log.Infof("Approval successful! Transaction hash: %s", txHash)
 	log.Infof("Check on PolygonScan: https://polygonscan.com/tx/%s", txHash)
 
+	return nil
 }
- 

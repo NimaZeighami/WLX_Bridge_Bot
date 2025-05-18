@@ -15,6 +15,7 @@ type QuoteRes struct {
 }
 
 type SwapReq struct {
+	QuoteId  string  `json:"quoteId" validate:"required"`
 }
 
 type SwapRes struct {

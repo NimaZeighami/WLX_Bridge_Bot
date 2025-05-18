@@ -2,11 +2,12 @@ package bridge_swap
 
 import (
 	log "bridgebot/internal/utils/logger"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-	"math"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -80,7 +81,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 
 	log.Infof("Received swap request: %+v", req)
 
-	quoteResponse,quoteId, err := s.ProcessQuote(c.Request().Context(), req)
+	quoteResponse, quoteId, err := s.ProcessQuote(c.Request().Context(), req)
 	if err != nil {
 		log.Errorf("Swap failed: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -118,7 +119,39 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 }
 
 func (s *SwapServer) HandleSwap(c echo.Context) error {
+	var req SwapReq
+	if err := c.Bind(&req); err != nil || req.QuoteId == "0" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Valid quoteId is required in the JSON req",
+		})
+	}
+
+	log.Infof("Processing swap for quote ID: %d", req.QuoteId)
+
+	quoteIdUint64, err := strconv.ParseUint(req.QuoteId, 10, 64)
+	if err != nil {
+		log.Errorf("Swap failed for quote ID %d: %v", req.QuoteId, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	txHash, err := s.ProcessSwap(c.Request().Context(), uint(quoteIdUint64))
+	if err != nil {
+		log.Errorf("Swap failed for quote ID %d: %v", req.QuoteId, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// TODO: ADD an state updater for quote in quotes table
+	// I have it in in ProcessSwap
 	return c.JSON(http.StatusOK, map[string]string{
-		"message": "Swap endpoint is not implemented yet",
+		"message":  "Swap submitted successfully",
+		"tx_hash":  txHash,
+		"quote_id": req.QuoteId,
 	})
+	// TODO: ADD other messages like : "Swap failed" 
+	// TODO: ADD implement other bridgers API for tracking Transaction Status
+	// TODO: ADD other status updater function based on New API Response ...  expired, confirmed (mined), success (mind and funds recieved) 
 }
