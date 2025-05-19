@@ -150,7 +150,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
-		gasPrice = big.NewInt(100e9) // 100 Gwei
+		gasPrice = big.NewInt(50e9) 
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
@@ -167,7 +167,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	data := common.FromHex(callData.Data.TxData.Data)
 
-	gasLimit := uint64(500000) // Default gas limit
+	gasLimit := uint64(21000) // Default gas limit
 	estimatedGas, err := client.EstimateGas(ctx, ethereum.CallMsg{
 		From:     fromAddress,
 		To:       &toAddress,

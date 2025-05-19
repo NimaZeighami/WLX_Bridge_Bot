@@ -102,12 +102,13 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to suggest gas price: %w", err)
+		// return "", fmt.Errorf("failed to suggest gas price: %w", err)
+		gasPrice = big.NewInt(50e9)
+		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
-	gasPrice = new(big.Int).Mul(gasPrice, big.NewInt(120)) // Increase by 20%
+	gasPrice = new(big.Int).Mul(gasPrice, big.NewInt(120)) // Increase by 20%  // TODO: it might be omitted
 
-	// Estimate gas limit.
 	msg := ethereum.CallMsg{
 		From:     from,
 		To:       &to,
@@ -120,7 +121,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
 		// If estimation fails, use a default gas limit
-		gasLimit = 100000
+		gasLimit = uint64(21000)
 		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
 	}
 

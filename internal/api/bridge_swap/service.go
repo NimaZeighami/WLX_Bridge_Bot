@@ -143,6 +143,12 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	}
 	fromAmount := big.NewInt(fromAmountInt)
 
+	// revokeErr := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress, big.NewInt(0))
+	// if revokeErr != nil {
+	// 	s.DB.Model(&quote).Update("state", "failed")
+	// 	return "", fmt.Errorf("approval failed: %v", revokeErr)
+	// }
+
 	// TODO: like Polygon we should check chain and based on that have approval (Switch-Case)
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
 		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, fromAmount)
