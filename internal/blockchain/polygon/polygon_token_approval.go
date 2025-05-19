@@ -80,7 +80,6 @@ func init() {
 	}
 }
 
-
 // NewPolygonClient creates and returns an Ethereum client connected to Polygon using POLYGON_RPC_URL.
 func NewPolygonClient() (*ethclient.Client, error) {
 	configs.LoadEnv("../../.env")
@@ -107,7 +106,17 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
-	gasPrice = new(big.Int).Mul(gasPrice, big.NewInt(120)) // Increase by 20%  // TODO: it might be omitted
+	
+	tipCap, err := client.SuggestGasTipCap(ctx)
+	if err != nil {
+		tipCap = big.NewInt(20e9)
+		log.Warnf("Failed to get suggested gas tip cap, using default: %v", err)
+	} else {
+		log.Infof("Suggested gas tip cap: %s wei", tipCap.String())
+	}
+
+	// maxPriorityFeePerGas
+	gasPrice = new(big.Int).Add(gasPrice, tipCap)
 
 	msg := ethereum.CallMsg{
 		From:     from,

@@ -154,6 +154,17 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
+	tipCap, err := client.SuggestGasTipCap(ctx)
+	if err != nil {
+		tipCap = big.NewInt(20e9)
+		log.Warnf("Failed to get suggested gas tip cap, using default: %v", err)
+	} else {
+		log.Infof("Suggested gas tip cap: %s wei", tipCap.String())
+	}
+
+	// maxPriorityFeePerGas
+	gasPrice = new(big.Int).Add(gasPrice, tipCap)
+
 	toAddress := common.HexToAddress(callData.Data.TxData.To)
 
 	value := big.NewInt(0)
