@@ -150,7 +150,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
-		gasPrice = big.NewInt(50e9) 
+		gasPrice = big.NewInt(100e9) 
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 

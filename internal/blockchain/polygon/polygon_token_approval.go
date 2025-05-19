@@ -102,7 +102,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		// return "", fmt.Errorf("failed to suggest gas price: %w", err)
-		gasPrice = big.NewInt(50e9)
+		gasPrice = big.NewInt(100e9)
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
@@ -130,7 +130,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
 		// If estimation fails, use a default gas limit
-		gasLimit = uint64(21000)
+		gasLimit = uint64(70000)
 		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
 	}
 
