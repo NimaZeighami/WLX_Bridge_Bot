@@ -21,9 +21,10 @@ func NewServer(swapServer *bridge_swap.SwapServer) *echo.Echo {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
+	
 	e.Validator = &CustomValidator{validator: validator.New()}
-
+	
+	// TODO: Use ECHO Groupt
 	e.POST("/v1/getQuote",  swapServer.HandleQuote)
 
 	e.POST("/v1/swap", swapServer.HandleSwap)

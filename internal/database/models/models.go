@@ -28,11 +28,12 @@ type BridgeConfiguration struct {
 }
 
 type TokenInfo struct {
-	ChainID                      int
+	ChainID                      int //
 	TokenContractAddress         string
 	TokenDecimals                int
-	BridgersSmartContractAddress string
-	IsEnabled                    bool
+	BridgersSmartContractAddress string //
+	IsEnabled                    bool  //
+	
 }
 
 var DB *gorm.DB

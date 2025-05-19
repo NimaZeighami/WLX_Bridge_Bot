@@ -102,7 +102,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		// return "", fmt.Errorf("failed to suggest gas price: %w", err)
-		gasPrice = big.NewInt(100e9)
+		gasPrice = big.NewInt(100e9) //TODO: Get Gas Price from latest block
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 

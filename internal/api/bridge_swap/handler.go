@@ -43,6 +43,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
+	// TODO: remove checking from handler ↓↓
 	allowedTokens := []string{"USDT"}
 	if !isAllowed(req.FromToken, allowedTokens) {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -78,6 +79,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 			"error": "Invalid toWalletAddress: must be alphanumeric and 26–64 characters",
 		})
 	}
+	// ↑↑
 
 	log.Infof("Received swap request: %+v", req)
 
@@ -97,6 +99,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
+	//TODO : check this with your const (map struct)
 	fromAmountInt := fromAmountDec / int(math.Pow(10, float64(quoteResponse.Data.TxData.FromTokenDecimal)))
 	fromAmount := strconv.Itoa(fromAmountInt)
 
@@ -107,9 +110,9 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		"fromTokenAmount": fromAmount,
 		"fromToken":       req.FromToken,
 		"fromTokenChain":  req.FromTokenChain,
-		"bridge":          "The Bridgers1",
+		"bridge":          "The Bridgers1", //TODO: make it constant
 		"quoteId":         strconv.FormatUint(uint64(quoteId), 10),
-		"estimatedTime":   strconv.FormatUint(uint64(quoteResponse.Data.TxData.EstimatedTime), 10),
+		"estimatedTime":   strconv.FormatUint(uint64(quoteResponse.Data.TxData.EstimatedTime), 10),  
 		// ? Note: Decimal values are intentionally omitted from the response to simplify the user experience.
 		// ? We get amount without decimal and we ourself send amount with decimal to the bridgers API. and
 		// ? Return the response to the user without decimal values.

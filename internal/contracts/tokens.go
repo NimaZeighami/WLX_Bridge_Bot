@@ -9,3 +9,5 @@ const (
 	USDT_TRC20_Addr     = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
 	USDT_TRC20_Decimal = 6
 )
+
+// TODO: convert to map enum (bsc) sturct  (contract addr , decimal, chainID, supportedTokensArr etc)
