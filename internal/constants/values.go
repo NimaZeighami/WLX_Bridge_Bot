@@ -1,4 +1,4 @@
-package defaults
+package constants
 
 const (
 	Gas_Price = 70e9

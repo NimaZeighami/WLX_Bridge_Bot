@@ -32,8 +32,8 @@ type TokenInfo struct {
 	TokenContractAddress         string
 	TokenDecimals                int
 	BridgersSmartContractAddress string //
-	IsEnabled                    bool  //
-	
+	IsEnabled                    bool   //
+
 }
 
 var DB *gorm.DB
@@ -47,19 +47,22 @@ type NetworkTokenPair struct {
 	IsEnabled         bool   `gorm:"column:is_enabled"`
 }
 
-
 type Quote struct {
 	ID               uint      `gorm:"primaryKey"`
 	FromTokenAddress string    `gorm:"column:from_token_address"`
 	ToTokenAddress   string    `gorm:"column:to_token_address"`
+	FromTokenSymbol   string    `gorm:"column:from_token_symbol"`
+	ToTokenSymbol   string    `gorm:"column:to_token_symbol"`
 	FromChain        string    `gorm:"column:from_chain"`
 	ToChain          string    `gorm:"column:to_chain"`
 	FromAddress      string    `gorm:"column:from_address"`
 	ToAddress        string    `gorm:"column:to_address"`
+	FromCoinCode     string    `gorm:"column:from_coin_code"`
+	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAmount       string    `gorm:"column:from_amount"`
 	ToAmountMin      string    `gorm:"column:to_amount_min"`
 	TxHash           string    `gorm:"column:tx_hash"`
-	State            string    `gorm:"column:state"` 
+	State            string    `gorm:"column:state"`
 	CreatedAt        time.Time `gorm:"column:created_at"`
 	UpdatedAt        time.Time `gorm:"column:updated_at"`
 }

@@ -1,39 +1,48 @@
 package bridge_swap
 
 import (
+	"bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
+	"github.com/labstack/echo/v4"
 	"math"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/labstack/echo/v4"
 )
 
-var universalWalletRegex = regexp.MustCompile(`^[a-zA-Z0-9]{26,64}$`)
 
-func isValidUniversalWalletAddress(addr string) bool {
-	addr = strings.TrimSpace(addr)
-	return universalWalletRegex.MatchString(addr)
-}
+const BridgeProviderName = "The Bridgers cross-chain bridge"
 
-// helper function to check if a value exists in a slice
-func isAllowed(value string, allowed []string) bool {
-	for _, v := range allowed {
-		if strings.EqualFold(v, value) {
-			return true
-		}
-	}
-	return false
-}
 
 func (s *SwapServer) HandleQuote(c echo.Context) error {
 	var req QuoteReq
+	var pairs []models.NetworkTokenPair
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid JSON format",
+		})
+	}
+
+	if err := s.DB.Find(&pairs).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "failed to fetch token pairs",
+		})
+	}
+
+	isPairValid := false
+	for _, p := range pairs {
+		if strings.EqualFold(p.FromTokenSymbol, req.FromToken) &&
+			strings.EqualFold(p.FromNetworkSymbol, req.FromTokenChain) &&
+			strings.EqualFold(p.ToTokenSymbol, req.ToToken) &&
+			strings.EqualFold(p.ToNetworkSymbol, req.ToTokenChain) {
+			isPairValid = true
+			break
+		}
+	}
+	if !isPairValid {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid token pair",
 		})
 	}
 
@@ -42,44 +51,6 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-
-	// TODO: Move below things to Process Quote  ↓↓
-	allowedTokens := []string{"USDT"}
-	if !isAllowed(req.FromToken, allowedTokens) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Unsupported fromToken: only USDT is allowed",
-		})
-	}
-	if !isAllowed(req.ToToken, allowedTokens) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Unsupported toToken: only USDT is allowed",
-		})
-	}
-
-	allowedChains := []string{"BSC", "POLYGON", "TRX"}
-	if !isAllowed(req.FromTokenChain, allowedChains) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid fromTokenChain: must be one of BSC, Polygon, or TRX(not tron based on bridgers !)",
-		})
-	}
-	if !isAllowed(req.ToTokenChain, allowedChains) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid toTokenChain: must be one of BSC, Polygon, or TRX(not tron based on bridgers !)",
-		})
-	}
-
-	if !isValidUniversalWalletAddress(req.FromWalletAddress) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid fromWalletAddress: must be alphanumeric and 26–64 characters",
-		})
-	}
-
-	if !isValidUniversalWalletAddress(req.ToWalletAddress) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid toWalletAddress: must be alphanumeric and 26–64 characters",
-		})
-	}
-	// TODO: Move above things to Process Quote   ↑↑
 
 	log.Infof("Received swap request: %+v", req)
 
@@ -110,9 +81,9 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		"fromTokenAmount": fromAmount,
 		"fromToken":       req.FromToken,
 		"fromTokenChain":  req.FromTokenChain,
-		"bridge":          "The Bridgers1", //TODO: make it constant
+		"bridge":          BridgeProviderName,
 		"quoteId":         strconv.FormatUint(uint64(quoteId), 10),
-		"estimatedTime":   strconv.FormatUint(uint64(quoteResponse.Data.TxData.EstimatedTime), 10),  
+		"estimatedTime":   strconv.FormatUint(uint64(quoteResponse.Data.TxData.EstimatedTime), 10),
 		// ? Note: Decimal values are intentionally omitted from the response to simplify the user experience.
 		// ? We get amount without decimal and we ourself send amount with decimal to the bridgers API. and
 		// ? Return the response to the user without decimal values.
@@ -123,6 +94,8 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 
 func (s *SwapServer) HandleSwap(c echo.Context) error {
 	var req SwapReq
+	var quote models.Quote
+
 	if err := c.Bind(&req); err != nil || req.QuoteId == "0" {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Valid quoteId is required in the JSON req",
@@ -136,6 +109,18 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 		log.Errorf("Swap failed for quote ID %d: %v", req.QuoteId, err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": err.Error(),
+		})
+	}
+
+	if err := s.DB.First(&quote, uint(quoteIdUint64)).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Quote not found",
+		})
+	}
+	if quote.State != "started" {
+		log.Warnf("Quote ID %d is in state '%s', not allowed for processing", quoteIdUint64, quote.State)
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "The quote has already been used or is no longer in a 'started' state. Please create a new quote for this swap, or check the current state using the status endpoint.",
 		})
 	}
 
@@ -156,5 +141,4 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 	})
 	// TODO: ADD a state checker to prevent running a swap on status except started
 	// TODO: ADD implement other bridgers API for tracking Transaction Status
-	// TODO: ADD other status updater function based on New API Response ...  expired, confirmed (mined), success (mind and funds recieved) 
 }

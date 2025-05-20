@@ -13,32 +13,11 @@ CREATE TABLE quotes (
     to_address VARCHAR(100) NOT NULL,
     from_amount DECIMAL(65, 0) NOT NULL,
     to_amount_min DECIMAL(65, 0) NOT NULL,
-    tx_hash VARCHAR(100),
-    state ENUM('pending', 'submitted', 'confirmed', 'failed', 'expired', 'success') NOT NULL DEFAULT 'pending',
+    tx_hash VARCHAR(100) ,
+    state ENUM('started', 'approved', 'broadcast', 'verified', 'approval_failed', 'broadcast_failed', 'failed') NOT NULL DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
--- States for 
-
--- pending  (created)
--- → Quote has been created, but no transaction yet.
-
--- submitted 
--- → The transaction is constructed and submitted to the blockchain.
-
--- confirmed
--- → The transaction is mined/confirmed on-chain.
-
--- failed
--- → Transaction failed (e.g., out of gas, user rejected, on-chain error).
-
--- expired
--- → Quote was not used within its valid window (often quotes are valid for a short time like 30s).
-
--- success
--- → Swap succeeded, funds bridged successfully.
-
 
 
 -- +goose Down
