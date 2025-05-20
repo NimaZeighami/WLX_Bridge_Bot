@@ -68,15 +68,12 @@ func FetchTokens(ctx context.Context, requestData RequestBody) ([]map[string]str
 
 // FetchAndMapTokens retrieves tokens for a given chain and stores them in the provided map.
 func FetchAndMapTokens(ctx context.Context, chain string, tokenMap map[string]string) error {
-	// log.Infof("Fetching tokens for chain: %s", chain)
-
 	requestData := RequestBody{Chain: chain}
 	tokens, err := FetchTokens(ctx, requestData)
 	if err != nil {
 		return fmt.Errorf("error fetching tokens for %s: %w", chain, err)
 	}
 
-	// log.Infof("Total Tokens on %s: %d", chain, len(tokens))
 	for _, token := range tokens {
 		tokenMap[token["symbol"]] = token["address"]
 	}

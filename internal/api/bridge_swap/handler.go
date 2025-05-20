@@ -43,7 +43,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	// TODO: remove checking from handler ↓↓
+	// TODO: Move below things to Process Quote  ↓↓
 	allowedTokens := []string{"USDT"}
 	if !isAllowed(req.FromToken, allowedTokens) {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -79,7 +79,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 			"error": "Invalid toWalletAddress: must be alphanumeric and 26–64 characters",
 		})
 	}
-	// ↑↑
+	// TODO: Move above things to Process Quote   ↑↑
 
 	log.Infof("Received swap request: %+v", req)
 
@@ -99,7 +99,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	//TODO : check this with your const (map struct)
+	//TODO : check this with your token const (map struct)
 	fromAmountInt := fromAmountDec / int(math.Pow(10, float64(quoteResponse.Data.TxData.FromTokenDecimal)))
 	fromAmount := strconv.Itoa(fromAmountInt)
 
@@ -147,14 +147,14 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 		})
 	}
 
-	// TODO: ADD an state updater for quote in quotes table
+	// TODO: ADD an state updater for quote in quotes table (tracking and updating state with statemachine )
 	// I have it in in ProcessSwap
 	return c.JSON(http.StatusOK, map[string]string{
 		"message":  "Swap submitted successfully",
 		"tx_hash":  txHash,
 		"quote_id": req.QuoteId,
 	})
-	// TODO: ADD other messages like : "Swap failed" 
+	// TODO: ADD a state checker to prevent running a swap on status except started
 	// TODO: ADD implement other bridgers API for tracking Transaction Status
 	// TODO: ADD other status updater function based on New API Response ...  expired, confirmed (mined), success (mind and funds recieved) 
 }

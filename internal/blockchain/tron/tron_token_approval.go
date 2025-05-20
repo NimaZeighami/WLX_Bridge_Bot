@@ -18,12 +18,13 @@ import (
 )
 
 const (
-	TokenAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf" // USDT Contract Address on Nile Testnet
-	// TokenAddress        = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" // USDT Contract Address on Mainnet
+	// todo: use all token addresses from token info struct 
+	// TokenAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf" // USDT Contract Address on Nile Testnet
+	TokenAddress        = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" // USDT Contract Address on Mainnet
 	ContractAddress = "TPwezUWpEGmFBENNWJHwXHRG1D2NCEEt5s"
 	ApprovalAmount  = 5                             // USDT (Dont Mention Decimal it get multiplied by 1e6)
-	TronNode        = "grpc.nile.trongrid.io:50051" // We Can have Array of Nodes and if one of them fails we can switch to another
-	// TronNode       = "grpc.trongrid.io:50051"
+	// TronNode        = "grpc.nile.trongrid.io:50051" // We Can have Array of Nodes and if one of them fails we can switch to another
+	TronNode       = "grpc.trongrid.io:50051"
 
 )
 
@@ -44,8 +45,8 @@ func NewTronClient() (*client.GrpcClient, error) {
 
 	// keepAliveParams := keepalive.ClientParameters{
 	//     Time:                10 * time.Second,
-	//     Timeout:             5 * time.Second,
-	//     PermitWithoutStream: true,
+	//     Timeout: * time.Second,
+	//     PermitWithoutStream:             5 true,
 	// }
 	// opts = append(opts, grpc.WithKeepaliveParams(keepAliveParams))
 
@@ -86,8 +87,8 @@ func IsApprovalNeeded(ctx context.Context, client *client.GrpcClient, walletAddr
 	allowance := new(big.Int).SetBytes(result.ConstantResult[0])
 	required := big.NewInt(ApprovalAmount)
 
+	// * Note
 	// return allowance.Cmp(requiredAmount) < 0, nil
-
 	// Cmp() compares two big.Int values:
 	// Cmp() == 0 → Both numbers are equal.
 	// Cmp() == 1 → Allowance is greater.
@@ -107,13 +108,11 @@ func ApproveContract(ctx context.Context, client *client.GrpcClient, privateKey 
 	amount := new(big.Int).Mul(big.NewInt(ApprovalAmount), big.NewInt(1e6))
 	params := fmt.Sprintf(`[{"address":"%s"},{"uint256":"%s"}]`, ContractAddress, amount.String())
 
-	// Convert private key to TRON Base58 address
 	privKey, err := crypto.HexToECDSA(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("invalid private key: %v", err)
 	}
 
-	// Convert public key to TRON address
 	pubKey := privKey.PublicKey
 	ethAddress := crypto.PubkeyToAddress(pubKey).Hex() // Ethereum-style hex address
 	tronHexAddress := "41" + ethAddress[2:]            // Convert to Tron Hex format
@@ -126,7 +125,6 @@ func ApproveContract(ctx context.Context, client *client.GrpcClient, privateKey 
 
 	feeLimit := int64(1000000)
 
-	// Call the contract
 	txExt, err := client.TriggerContract(
 		fromAddress, TokenAddress, "approve(address,uint256)", params,
 		feeLimit, 0, "", 0,
@@ -140,18 +138,15 @@ func ApproveContract(ctx context.Context, client *client.GrpcClient, privateKey 
 		return "", fmt.Errorf("transaction is nil")
 	}
 
-	// Sign the transaction
 	signedTx, err := SignTransaction(tx, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %v", err)
 	}
 
-	// Broadcast the transaction
 	result, err := client.Broadcast(signedTx)
 	if err != nil {
 		return "", fmt.Errorf("failed to broadcast transaction: %v", err)
 	}
-	// Convert transaction hash from bytes to hex string
 	txHash := hex.EncodeToString(txExt.Txid)
 
 	fmt.Printf("Approval transaction sent: %s\n", result.String())
@@ -163,13 +158,11 @@ func RevokeApproval(ctx context.Context, client *client.GrpcClient, privateKey s
 	amount := big.NewInt(0)
 	params := fmt.Sprintf(`[{"address":"%s"},{"uint256":"%s"}]`, ContractAddress, amount.String())
 
-	// Convert private key to TRON Base58 address
 	privKey, err := crypto.HexToECDSA(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("invalid private key: %v", err)
 	}
 
-	// Convert public key to TRON address
 	pubKey := privKey.PublicKey
 	ethAddress := crypto.PubkeyToAddress(pubKey).Hex() // Ethereum-style hex address
 	tronHexAddress := "41" + ethAddress[2:]            // Convert to Tron Hex format
@@ -177,12 +170,11 @@ func RevokeApproval(ctx context.Context, client *client.GrpcClient, privateKey s
 	if err != nil {
 		return "", fmt.Errorf("failed to convert hex to bytes: %v", err)
 	}
-	// Convert Hex Tron address to Base58
+	
 	fromAddress := common.EncodeCheck(tronHexBytes)
 
 	feeLimit := int64(1_000_000)
 
-	// Call the contract
 	txExt, err := client.TriggerContract(
 		fromAddress, TokenAddress, "approve(address,uint256)", params,
 		feeLimit, 0, "", 0,
@@ -196,20 +188,17 @@ func RevokeApproval(ctx context.Context, client *client.GrpcClient, privateKey s
 		return "", fmt.Errorf("transaction is nil")
 	}
 
-	// Sign the transaction
 	signedTx, err := SignTransaction(tx, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %v", err)
 	}
 
-	// Broadcast the transaction
 	result, err := client.Broadcast(signedTx)
 	if err != nil {
 		return "", fmt.Errorf("failed to broadcast transaction: %v", err)
 	}
-	// Convert transaction hash from bytes to hex string
-	txHash := hex.EncodeToString(txExt.Txid)
 
+	txHash := hex.EncodeToString(txExt.Txid)
 	fmt.Printf("Approval transaction sent: %s\n", result.String())
 	return txHash, nil
 }
@@ -239,13 +228,11 @@ func SignTransaction(tx *core.Transaction, privateKey string) (*core.Transaction
 
 // BroadcastTransaction signs and broadcasts a TRON transaction
 func BroadcastTransaction(client *client.GrpcClient, tx *core.Transaction, privateKey string) (string, error) {
-	// Sign the transaction
 	signedTx, err := SignTransaction(tx, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %v", err)
 	}
 
-	// Compute transaction ID (Txid) manually
 	rawData, err := proto.Marshal(signedTx.GetRawData())
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal transaction raw data: %v", err)
@@ -253,7 +240,6 @@ func BroadcastTransaction(client *client.GrpcClient, tx *core.Transaction, priva
 	txHash := sha256.Sum256(rawData)
 	txHashHex := hex.EncodeToString(txHash[:])
 
-	// Broadcast the transaction
 	result, err := client.Broadcast(signedTx)
 	if err != nil {
 		return "", fmt.Errorf("failed to broadcast transaction: %v", err)
@@ -272,7 +258,6 @@ func BroadcastTransactionWithCalldata(ctx context.Context, client *client.GrpcCl
 		return "", fmt.Errorf("invalid private key: %v", err)
 	}
 
-	// Convert public key to TRON address
 	pubKey := privKey.PublicKey
 	ethAddress := crypto.PubkeyToAddress(pubKey).Hex() // Ethereum-style hex address
 	tronHexAddress := "41" + ethAddress[2:]            // Convert to Tron Hex format
@@ -283,12 +268,11 @@ func BroadcastTransactionWithCalldata(ctx context.Context, client *client.GrpcCl
 	// Convert Hex Tron address to Base58
 	fromAddress := common.EncodeCheck(tronHexBytes)
 
-	// Call the contract
 	txExt, err := client.TriggerContract(
 		fromAddress,
 		contractAddress,
-		functionSignature, // Function name
-		calldata,          // Encoded parameters
+		functionSignature, 
+		calldata,          
 		feeLimit,
 		callValue,
 		"",
@@ -303,13 +287,11 @@ func BroadcastTransactionWithCalldata(ctx context.Context, client *client.GrpcCl
 		return "", fmt.Errorf("transaction is nil")
 	}
 
-	// Sign the transaction
 	signedTx, err := SignTransaction(tx, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %v", err)
 	}
 
-	// Compute transaction ID (Txid) manually
 	rawData, err := proto.Marshal(signedTx.GetRawData())
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal transaction raw data: %v", err)
@@ -317,7 +299,6 @@ func BroadcastTransactionWithCalldata(ctx context.Context, client *client.GrpcCl
 	txHash := sha256.Sum256(rawData)
 	txHashHex := hex.EncodeToString(txHash[:])
 
-	// Broadcast the transaction
 	result, err := client.Broadcast(signedTx)
 	if err != nil {
 		return "", fmt.Errorf("failed to broadcast transaction: %v", err)

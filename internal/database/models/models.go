@@ -59,7 +59,7 @@ type Quote struct {
 	FromAmount       string    `gorm:"column:from_amount"`
 	ToAmountMin      string    `gorm:"column:to_amount_min"`
 	TxHash           string    `gorm:"column:tx_hash"`
-	State            string    `gorm:"column:state"` // e.g., "pending", "completed", etc.
+	State            string    `gorm:"column:state"` 
 	CreatedAt        time.Time `gorm:"column:created_at"`
 	UpdatedAt        time.Time `gorm:"column:updated_at"`
 }

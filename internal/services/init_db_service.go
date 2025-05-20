@@ -1,9 +1,3 @@
-// This will handle:
-// Database init
-// Config loading
-// Token map construction
-// OS signal handling
-
 package services
 
 import (
@@ -17,7 +11,9 @@ import (
 	"syscall"
 )
 
+// InitDatabase initializes the database connection and switches to the 'bridgebot_core' database, returning the GORM DB instance.
 func InitDatabase() *gorm.DB {
+	// todo: this fields should move to .env
 	config := models.DBConfig{
 		Username: "root",
 		Password: "@Nima8228",
@@ -39,33 +35,7 @@ func InitDatabase() *gorm.DB {
 	return db
 }
 
-func LoadBridgeConfigs(db *gorm.DB) []models.BridgeConfiguration {
-	var bridgeConfigs []models.BridgeConfiguration
-	if err := db.Find(&bridgeConfigs).Error; err != nil {
-		log.Fatalf("Error fetching bridge configs: %v", err)
-	}
-	return bridgeConfigs
-}
-
-
-// TODO: type map[string]map[string] reverse to order
-func BuildTokenMap(bridgeConfigs []models.BridgeConfiguration) map[string]map[string]models.TokenInfo {
-	tokenMap := make(map[string]map[string]models.TokenInfo)
-	for _, config := range bridgeConfigs {
-		if _, exists := tokenMap[config.Token]; !exists {
-			tokenMap[config.Token] = make(map[string]models.TokenInfo)
-		}
-		tokenMap[config.Token][config.Network] = models.TokenInfo{
-			ChainID:                      config.ChainID,
-			TokenContractAddress:         config.TokenContractAddress,
-			TokenDecimals:                config.TokenDecimals,
-			BridgersSmartContractAddress: config.BridgersSmartContractAddress,
-			IsEnabled:                    config.IsEnabled,
-		}
-	}
-	return tokenMap
-}
-
+// todo: check this 
 func SetupSignalHandler(cancelFunc context.CancelFunc) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)

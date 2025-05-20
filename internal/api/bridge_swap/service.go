@@ -110,7 +110,7 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		log.Errorf("failed to fetch quote: %w", err)
 		return nil, 0, fmt.Errorf("failed to fetch quote")
 	}
-	// TODO: Tokens table can be omit because it is additional
+	// todo: Tokens table can be omit because it is additional
 	quote := models.Quote{
 		FromTokenAddress: quoteReq.FromTokenAddress,
 		ToTokenAddress:   quoteReq.ToTokenAddress,
@@ -121,7 +121,8 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		FromAmount:       quoteReq.FromTokenAmount,
 		ToAmountMin:      quoteResp.Data.TxData.AmountOutMin,
 		TxHash:           "",
-		State:            "pending", // initial state , other states can be submitted, confirmed, failed, expired and success.
+		State:            "pending", //TODO: Change the states  
+		 // initial state , other states can be submitted, confirmed, failed, expired and success.
 	}
 
 	if err := s.DB.Create(&quote).Error; err != nil {
@@ -136,20 +137,22 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	if err := s.DB.First(&quote, quoteID).Error; err != nil {
 		return "", fmt.Errorf("quote not found")
 	}
-	// ! Uncomment
+
 	fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
 	if err != nil {
 		return "", fmt.Errorf("invalid from amount: %v", err)
 	}
 	fromAmount := big.NewInt(fromAmountInt)
 
+
+	// ! If you need revoke approval for some reason uncomment this part and re-run the code
 	// revokeErr := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress, big.NewInt(0))
 	// if revokeErr != nil {
 	// 	s.DB.Model(&quote).Update("state", "failed")
 	// 	return "", fmt.Errorf("approval failed: %v", revokeErr)
 	// }
 
-	// TODO: like Polygon we should check chain and based on that have approval (Switch-Case)
+	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
 		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, fromAmount)
 		if isApprovalNeeded {
@@ -162,17 +165,14 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	}
 
 	fromToken := quote.FromTokenAddress
-
-
 	toToken := quote.ToTokenAddress
-
 
 	callReq := services.BuildCalldataRequest(
 		quote.FromAddress,
 		quote.ToAddress,
 		fromToken,
 		toToken,
-		quote.ToAmountMin, // TODO: toAmountMin has wrong value in database it is equal to fromAmount and it should fixed 
+		quote.ToAmountMin,
 		fromAmount)
 
 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
@@ -185,7 +185,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	}
 
 	s.DB.Model(&quote).Updates(map[string]interface{}{
-		"state":   "submitted",
+		"state":   "submitted", //TODO: this should be change based on statemachine [ in simpler way it should be ??  ]
 		"tx_hash": txHash,
 	})
 

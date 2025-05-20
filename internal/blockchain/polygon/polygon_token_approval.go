@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+// TODO: use token struct for all token addresses
 const TokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" // Polygon  USDT Contract Address on Mainnet
 
 // extendedERC20ABI includes functions for approve, allowance, increaseAllowance, and decreaseAllowance.
@@ -72,6 +73,7 @@ const extendedERC20ABI = `
 // erc20ParsedABI is the parsed ABI for ERC20 functions.
 var erc20ParsedABI abi.ABI
 
+// todo: do this with sync cache and get
 func init() {
 	var err error
 	erc20ParsedABI, err = abi.JSON(strings.NewReader(extendedERC20ABI))
@@ -102,7 +104,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		// return "", fmt.Errorf("failed to suggest gas price: %w", err)
-		gasPrice = big.NewInt(100e9) //TODO: Get Gas Price from latest block
+		gasPrice = big.NewInt(100e9) //todo: Get Gas Price from latest block
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
@@ -126,31 +128,25 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		GasPrice: gasPrice,
 	}
 
-	// TODO: Check this
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
-		// If estimation fails, use a default gas limit
 		gasLimit = uint64(70000)
 		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
 	}
 
-	// Build the transaction.
 	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, data)
 
-	// Get chain ID.
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
 		chainID = big.NewInt(137) // Default to Polygon mainnet
 		log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
 	}
 
-	// Sign the transaction.
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %w", err)
 	}
 
-	// Send the transaction.
 	if err := client.SendTransaction(ctx, signedTx); err != nil {
 		return "", fmt.Errorf("failed to send transaction: %w", err)
 	}
@@ -209,7 +205,6 @@ func ApproveContract(client *ethclient.Client, tokenAddress, spender common.Addr
 
 // RevokeApproval revokes any previously granted approval by setting the allowance to zero.
 func RevokeApproval(client *ethclient.Client, tokenAddress, spender common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
-	// Revocation is typically done by approving 0.
 	return ApproveContract(client, tokenAddress, spender, big.NewInt(0), privateKey)
 }
 

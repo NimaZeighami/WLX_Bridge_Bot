@@ -98,30 +98,7 @@ func FetchBridgeCallData(ctx context.Context, request CallDataRequest) (*Polygon
 	return response, nil
 }
 
-// ExecuteBridgersSwapTransaction handles calldata construction and broadcasting the transaction
-// for a swap operation using the Bridgers protocol.
-//
-// Parameters:
-// - ctx: Context for the operation
-// - client: Initialized Ethereum client for the blockchain network
-// - request: CallDataRequest containing all parameters for the swap
-// - privateKey: Private key for signing the transaction
-//
-// Returns:
-// - Transaction hash as string
-// - Error if the operation fails
-// ExecuteBridgersSwapTransaction handles calldata construction and broadcasting the transaction
-// for a swap operation using the Bridgers protocol.
-//
-// Parameters:
-// - ctx: Context for the operation
-// - client: Initialized Ethereum client for the blockchain network
-// - request: CallDataRequest containing all parameters for the swap
-// - privateKey: Private key for signing the transaction
-//
-// Returns:
-// - Transaction hash as string
-// - Error if the operation fails
+// ExecuteBridgersSwapTransaction constructs calldata and broadcasts a swap transaction using the Bridgers protocol, returning the transaction hash or an error.
 func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Client, request CallDataRequest, privateKey *ecdsa.PrivateKey) (string, error) {
 	log.Info("Fetching bridge transaction calldata...")
 

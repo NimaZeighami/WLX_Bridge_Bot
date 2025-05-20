@@ -5,12 +5,10 @@ import (
 	"bridgebot/internal/api/bridge_swap"
 	"bridgebot/internal/services"
 	log "bridgebot/internal/utils/logger"
-	// "context"
 )
 
 func main() {
 	log.Info("Starting Bridge Bot...")
-	// ctx, cancel := context.WithCancel(context.Background())
 
 	db := services.InitDatabase()
 	swapServer  := &bridge_swap.SwapServer{DB: db}
@@ -24,67 +22,31 @@ func main() {
 	log.Infof("%#v", bridge_swap.QuoteRes{})
 }
 
-// ! Without the API server, with the code below the bot will not be able to process requests and execute transactions!
-// ! before running this code, make sure to run migratinos for tables
 
-// package main
 
-// import (
-// 	"bridgebot/configs"
-// 	"bridgebot/internal/contracts"
-// 	"bridgebot/internal/services"
-// 	log "bridgebot/internal/utils/logger"
-// 	"context"
-// 	"math/big"
-// )
 
-// const BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 
-// func main() {
-// 	log.Info("Starting Bridge Bot...")
 
-// 	ctx, cancel := context.WithCancel(context.Background())
-// 	defer cancel()
-// 	services.SetupSignalHandler(cancel)
 
-// 	userAddr := "0x7d0F13148e85A53227c65Ed013E7961A67839858"
-// 	receiverAddr := userAddr
 
-// 	quoteReq := services.BuildQuoteRequest(userAddr, contracts.USDT_POLYGON_Addr, contracts.USDT_BSC_Addr)
-// 	quoteRes := services.RequestQuote(ctx, quoteReq)
 
-// 	log.Infof("Quote Response: %s USDT(BSC) for %s USDT(POLYGON)",
-// 		quoteRes.Data.TxData.ToTokenAmount,
-// 		quoteRes.Data.TxData.FromTokenAmount,
-// 	)
 
-// 	bridgeAmount := big.NewInt(BridgingAmount)
 
-// 	isApprovalNeeded := services.CheckPolygonApproval(ctx, userAddr, contracts.USDT_POLYGON_Addr, bridgeAmount)
-// 	if isApprovalNeeded {
-// 		services.SubmitPolygonApproval(ctx, userAddr, contracts.USDT_POLYGON_Addr, configs.GetBridgersContractAddr("POLYGON"), bridgeAmount)
-// 	}
 
-// 	callReq := services.BuildCalldataRequest(
-// 		userAddr,
-// 		receiverAddr,
-// 		contracts.USDT_POLYGON_Addr,
-// 		contracts.USDT_BSC_Addr,
-// 		quoteRes.Data.TxData.AmountOutMin, //changing this to lower value helps to get revert later !		// "19000000000000000000000000",
-// 		bridgeAmount,
-// 	)
-// 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
-// 	if err != nil {
-// 		log.Errorf("Error executing bridge transaction: %v", err)
-// 	} else {
-// 		log.Infof("Transaction sent: %s", txHash)
-// 	}
-// }
+
+
+
+
+
+
+
+
+
+
+
+
 
 // * NoteBook
-
-// ! If the total exchange fee of single order is less than 0.5 USDT, it will be charged as 0.5 USDT.
-
 // ? Tranccation Consist of
 // ? 1. the amount of ether you're transferring,
 // ? 2. the gas limit,
@@ -92,6 +54,7 @@ func main() {
 // ? 1. a nonce,
 // ? 5. the receiving address,
 // ? 6. and optionally data.
+
 // ? Signing and Broadcasting the transaction
 // 1. connecting to the Ethereum client
 // 2. load the private key
@@ -101,8 +64,12 @@ func main() {
 // 6. gas limit (21000) and get gas price dynamically
 // ! for erc20 token transfer we have to set the data field of the transaction
 // ? considering that in  erc20 token transfer the value is 0
-
 // 7. create the transaction
 // 8. sign the transaction with the private key
 // 9. send the transaction to the network
 // 10. wait for the transaction to be mined
+
+
+// USE
+// "context"
+// ctx, cancel := context.WithCancel(context.Background())

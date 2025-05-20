@@ -1,9 +1,3 @@
-// File Name: approval_service.go
-// This file contains the SubmitPolygonApproval function, which is responsible
-// for submitting an approval transaction on the Polygon blockchain. It interacts
-// with a specified token contract to approve a spender address for a required
-// amount, enabling further operations such as token transfers or bridging.
-
 package services
 
 import (
@@ -17,10 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const (
-	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
-)
-
+// CheckPolygonApproval determines whether a token approval is required for a given owner and amount on the Polygon network.
 func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddress string, requiredAmount *big.Int) bool {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
@@ -28,7 +19,6 @@ func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddres
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
 	spender := common.HexToAddress(owner)
-	// requiredAmount := big.NewInt(BridgingAmount)
 
 	log.Info("Checking if approval is needed...")
 	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(owner), spender, requiredAmount)
@@ -44,6 +34,7 @@ func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddres
 	return isNeeded
 }
 
+// SubmitPolygonApproval submits an approval transaction on the Polygon network, allowing the specified spender to spend a given amount of tokens on behalf of the owner.
 func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddress, spenderAddress string, requiredAmount *big.Int) error {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
@@ -60,7 +51,6 @@ func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddre
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
 	spender := common.HexToAddress(spenderAddress)
-	// requiredAmount := big.NewInt(BridgingAmount)
 
 	txHash, err := polygon.ApproveContract(client, tokenAddress, spender, requiredAmount, privateKey)
 	if err != nil {
