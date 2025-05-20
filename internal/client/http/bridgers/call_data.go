@@ -155,7 +155,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	data := common.FromHex(callData.Data.TxData.Data)
 
-	gasLimit := uint64(21000) // Default gas limit
+	gasLimit := uint64(100000) // Default gas limit
 	estimatedGas, err := client.EstimateGas(ctx, ethereum.CallMsg{
 		From:     fromAddress,
 		To:       &toAddress,

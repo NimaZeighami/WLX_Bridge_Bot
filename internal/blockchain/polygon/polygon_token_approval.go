@@ -128,7 +128,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
-		gasLimit = uint64(70000)
+		gasLimit = uint64(100000)
 		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
 	}
 
