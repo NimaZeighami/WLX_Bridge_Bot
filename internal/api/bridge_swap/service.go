@@ -121,8 +121,8 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 
 	fromSymbol := TokenSymbol(req.FromTokenChain)
 	toSymbol := TokenSymbol(req.ToTokenChain)
-	fromCode := TokenSymbol(req.FromTokenChain)
-	toCode := TokenSymbol(req.ToTokenChain)
+	fromCode := TokenCoinCode(req.FromTokenChain)
+	toCode := TokenCoinCode(req.ToTokenChain)
 
 	quote := models.Quote{
 		FromTokenAddress: quoteReq.FromTokenAddress,

@@ -16,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
-
-// TODO: use token struct for all token addresses
 const TokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" // Polygon  USDT Contract Address on Mainnet
 
 // extendedERC20ABI includes functions for approve, allowance, increaseAllowance, and decreaseAllowance.
