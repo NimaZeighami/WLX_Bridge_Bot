@@ -132,13 +132,9 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 		})
 	}
 
-	// TODO: ADD an state updater for quote in quotes table (tracking and updating state with statemachine )
-	// I have it in in ProcessSwap
 	return c.JSON(http.StatusOK, map[string]string{
 		"message":  "Swap submitted successfully",
 		"tx_hash":  txHash,
 		"quote_id": req.QuoteId,
 	})
-	// TODO: ADD a state checker to prevent running a swap on status except started
-	// TODO: ADD implement other bridgers API for tracking Transaction Status
 }

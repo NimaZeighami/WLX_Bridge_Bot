@@ -92,9 +92,4 @@ var Chains = []Chain{
 	},
 
 }
-
-
-
-
-// TODO: convert to map enum (bsc) sturct  (contract addr , decimal, chainID, supportedTokensArr etc)
 	

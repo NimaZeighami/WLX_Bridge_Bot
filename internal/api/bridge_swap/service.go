@@ -151,6 +151,10 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, error) {
 	var quote models.Quote
 
+	if err := s.DB.First(&quote, quoteID).Error; err != nil {
+		return "", fmt.Errorf("quote not found: %v", err)
+	}
+	
 	fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
 	if err != nil {
 		return "", fmt.Errorf("invalid from amount: %v", err)
