@@ -130,9 +130,10 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
 		// If estimation fails, use a default gas limit
-		gasLimit = uint64(70000)
+		gasLimit = uint64(500000)
 		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
 	}
+	log.Infof("Estimated gas: %d, using gas limit: %d  in Approval !!!!Estimated gas", gasLimit, gasPrice)
 
 	// Build the transaction.
 	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, data)
