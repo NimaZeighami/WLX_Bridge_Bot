@@ -98,16 +98,10 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 
 	log.Warnf("From Amount: %v", fromAmountStr)
 
-	fromTokenAddr := USDTContractAdress(req.FromTokenChain)
-	toTokenAddr := USDTContractAdress(req.ToTokenChain)
-	// fromSymbol := TokenSymbol(req.FromTokenChain)
-	// toSymbol := TokenSymbol(req.ToTokenChain)
-	// fromCode := TokenCoinCode(req.FromTokenChain)
-	// toCode := TokenCoinCode(req.ToTokenChain)
 
 	quoteReq := bridgers.QuoteRequest{
-		FromTokenAddress: fromTokenAddr,
-		ToTokenAddress:   toTokenAddr,
+		FromTokenAddress: USDTContractAdress(req.FromTokenChain),
+		ToTokenAddress:   USDTContractAdress(req.ToTokenChain),
 		FromTokenAmount:  fromAmountStr,
 		FromTokenChain:   req.FromTokenChain,
 		ToTokenChain:     req.ToTokenChain,
@@ -123,16 +117,20 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 	}
 	// TODO: Tokens table can be omit because it is additional
 	quote := models.Quote{
-		FromTokenAddress: quoteReq.FromTokenAddress,
-		ToTokenAddress:   quoteReq.ToTokenAddress,
+		FromTokenAddress: USDTContractAdress(req.FromTokenChain),
+		ToTokenAddress:   USDTContractAdress(req.ToTokenChain),
 		FromChain:        quoteReq.FromTokenChain,
 		ToChain:          quoteReq.ToTokenChain,
+		FromToken:        TokenSymbol(req.FromTokenChain),
+		ToToken:          TokenSymbol(req.ToTokenChain),
+		FromCoinCode:     TokenCoinCode(req.FromTokenChain),
+		ToCoinCode:       TokenCoinCode(req.ToTokenChain),
 		FromAddress:      quoteReq.UserAddr,
 		ToAddress:        req.ToWalletAddress,
 		FromAmount:       quoteReq.FromTokenAmount,
 		ToAmountMin:      quoteResp.Data.TxData.AmountOutMin,
 		TxHash:           "",
-		State:            "pending", // initial state , other states can be submitted, confirmed, failed, expired and success.
+		State:            "started", 
 	}
 
 	if err := s.DB.Create(&quote).Error; err != nil {
@@ -194,7 +192,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	}
 
 	s.DB.Model(&quote).Updates(map[string]interface{}{
-		"state":   "submitted",
+		"state":   "verified",
 		"tx_hash": txHash,
 	})
 

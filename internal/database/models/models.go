@@ -46,19 +46,22 @@ type NetworkTokenPair struct {
 	IsEnabled         bool   `gorm:"column:is_enabled"`
 }
 
-
 type Quote struct {
 	ID               uint      `gorm:"primaryKey"`
 	FromTokenAddress string    `gorm:"column:from_token_address"`
 	ToTokenAddress   string    `gorm:"column:to_token_address"`
 	FromChain        string    `gorm:"column:from_chain"`
 	ToChain          string    `gorm:"column:to_chain"`
+	FromToken        string    `gorm:"column:from_token"`
+	ToToken          string    `gorm:"column:to_token"`
+	FromCoinCode     string    `gorm:"column:from_coin_code"`
+	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAddress      string    `gorm:"column:from_address"`
 	ToAddress        string    `gorm:"column:to_address"`
 	FromAmount       string    `gorm:"column:from_amount"`
 	ToAmountMin      string    `gorm:"column:to_amount_min"`
 	TxHash           string    `gorm:"column:tx_hash"`
-	State            string    `gorm:"column:state"` // e.g., "pending", "completed", etc.
+	State            string    `gorm:"column:state"`
 	CreatedAt        time.Time `gorm:"column:created_at"`
 	UpdatedAt        time.Time `gorm:"column:updated_at"`
 }
