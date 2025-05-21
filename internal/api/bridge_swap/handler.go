@@ -104,6 +104,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 }
 
 func (s *SwapServer) HandleSwap(c echo.Context) error {
+	var quote models.Quote
 	var req SwapReq
 	if err := c.Bind(&req); err != nil || req.QuoteId == "0" {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -118,6 +119,18 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 		log.Errorf("Swap failed for quote ID %d: %v", req.QuoteId, err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": err.Error(),
+		})
+	}
+
+	if err := s.DB.First(&quote, uint(quoteIdUint64)).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Quote not found",
+		})
+	}
+	if quote.State != "started" {
+		log.Warnf("Quote ID %d is in state '%s', not allowed for processing", quoteIdUint64, quote.State)
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "The quote has already been used or is no longer in a 'started' state. Please create a new quote for this swap, or check the current state using the status endpoint.",
 		})
 	}
 

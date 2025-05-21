@@ -208,7 +208,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	err = client.SendTransaction(ctx, signedTx)
 	if err != nil {
-		return "", fmt.Errorf("failed to send transaction: %v", err)
+		return "", fmt.Errorf("failed to send transaction: %v", err)  //todo : under price error we should retry
 	}
 
 	txHash := signedTx.Hash().Hex()

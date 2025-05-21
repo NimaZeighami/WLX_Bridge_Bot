@@ -153,7 +153,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 
 	// Send the transaction.
 	if err := client.SendTransaction(ctx, signedTx); err != nil {
-		return "", fmt.Errorf("failed to send transaction: %w", err)
+		return "", fmt.Errorf("failed to send transaction: %w", err)  //todo : under price error we should retry
 	}
 
 	return signedTx.Hash().Hex(), nil
