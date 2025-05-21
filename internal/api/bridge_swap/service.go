@@ -164,11 +164,14 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 		if isApprovalNeeded {
 			err := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
 			if err != nil {
-				s.DB.Model(&quote).Update("state", "failed")
+				s.DB.Model(&quote).Update("state", "approval_failed")
 				return "", fmt.Errorf("approval failed: %v", err)
 			}
 		}
 	}
+	s.DB.Model(&quote).Updates(map[string]interface{}{
+		"state": "approved",
+	})
 
 	fromToken := quote.FromTokenAddress
 
@@ -185,14 +188,14 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
 	if err != nil {
 		s.DB.Model(&quote).Updates(map[string]interface{}{
-			"state":   "failed",
+			"state":   "Broadcast_failed",
 			"tx_hash": "",
 		})
 		return "", fmt.Errorf("transaction failed: %v", err)
 	}
 
 	s.DB.Model(&quote).Updates(map[string]interface{}{
-		"state":   "verified",
+		"state":   "broadcast",
 		"tx_hash": txHash,
 	})
 
