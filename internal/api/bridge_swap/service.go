@@ -98,7 +98,6 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 
 	log.Warnf("From Amount: %v", fromAmountStr)
 
-
 	quoteReq := bridgers.QuoteRequest{
 		FromTokenAddress: USDTContractAdress(req.FromTokenChain),
 		ToTokenAddress:   USDTContractAdress(req.ToTokenChain),
@@ -110,7 +109,7 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		SourceFlag:       "WBB",
 	}
 
-	quoteResp, err := bridgers.RequestQuote(ctx, quoteReq)
+	quoteResp, err := bridgers.FetchQuote(ctx, quoteReq)
 	if err != nil {
 		log.Errorf("failed to fetch quote: %w", err)
 		return nil, 0, fmt.Errorf("failed to fetch quote")
@@ -130,7 +129,7 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 		FromAmount:       quoteReq.FromTokenAmount,
 		ToAmountMin:      quoteResp.Data.TxData.AmountOutMin,
 		TxHash:           "",
-		State:            "started", 
+		State:            "started",
 	}
 
 	if err := s.DB.Create(&quote).Error; err != nil {

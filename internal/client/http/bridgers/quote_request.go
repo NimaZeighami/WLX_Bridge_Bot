@@ -24,30 +24,28 @@ type QuoteResponse struct {
 	ResMsg  string `json:"resMsg"`
 	Data    struct {
 		TxData struct {
-			FromTokenAmount   string  `json:"fromTokenAmount"`
-			FromTokenDecimal  int     `json:"fromTokenDecimal"`
-			ToTokenAmount     string  `json:"toTokenAmount"`
-			ToTokenDecimal    int     `json:"toTokenDecimal"`
-			Dex               string  `json:"dex"`
-			Path              []any   `json:"path"`
-			Fee               float64 `json:"fee"`
-			FeeToken          string  `json:"feeToken"`
-			ContractAddress   string  `json:"contractAddress"`
-			LogoURL           string  `json:"logoUrl"`
-			ChainFee          string  `json:"chainFee"`
-			DepositMin        string  `json:"depositMin"`
-			DepositMax        string  `json:"depositMax"`
-			AmountOutMin      string  `json:"amountOutMin"`
-			EstimatedTime     int     `json:"estimatedTime"`
-			InstantRate       string  `json:"instantRate"`
+			FromTokenAmount  string  `json:"fromTokenAmount"`
+			FromTokenDecimal int     `json:"fromTokenDecimal"`
+			ToTokenAmount    string  `json:"toTokenAmount"`
+			ToTokenDecimal   int     `json:"toTokenDecimal"`
+			Dex              string  `json:"dex"`
+			Path             []any   `json:"path"`
+			Fee              float64 `json:"fee"`
+			FeeToken         string  `json:"feeToken"`
+			ContractAddress  string  `json:"contractAddress"`
+			LogoURL          string  `json:"logoUrl"`
+			ChainFee         string  `json:"chainFee"`
+			DepositMin       string  `json:"depositMin"`
+			DepositMax       string  `json:"depositMax"`
+			AmountOutMin     string  `json:"amountOutMin"`
+			EstimatedTime    int     `json:"estimatedTime"`
+			InstantRate      string  `json:"instantRate"`
 		} `json:"txData"`
 	} `json:"data"`
 }
 
-
-
-// RequestQuote sends a quote request to the Bridgers API.
-func RequestQuote(ctx context.Context, requestBody QuoteRequest) (*QuoteResponse, error) {
+// FetchQuote sends a quote request to the Bridgers API.
+func FetchQuote(ctx context.Context, requestBody QuoteRequest) (*QuoteResponse, error) {
 	url := "https://api.bridgers.xyz/api/sswap/quote"
 	headers := map[string]string{
 		"Content-Type": "application/json",

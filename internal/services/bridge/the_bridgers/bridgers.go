@@ -37,12 +37,10 @@ func BuildQuoteRequest(userAddr string, from, to models.TokenInfo) bridgers.Quot
 
 // RequestQuote fetches a quote for bridging tokens using the bridgers API.
 func RequestQuote(ctx context.Context, req bridgers.QuoteRequest) *bridgers.QuoteResponse {
-	resp, err := bridgers.RequestQuote(ctx, req)
+	resp, err := bridgers.FetchQuote(ctx, req)
 	if err != nil {
 		log.Errorf("Error fetching quote: %v", err)
 		panic(err)
 	}
 	return resp
 }
-
-

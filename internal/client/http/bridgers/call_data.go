@@ -1,6 +1,3 @@
-
-
-
 package bridgers
 
 import (
@@ -150,7 +147,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
-		gasPrice = big.NewInt(100e9) 
+		gasPrice = big.NewInt(100e9)
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
@@ -208,7 +205,7 @@ func ExecuteBridgersSwapTransaction(ctx context.Context, client *ethclient.Clien
 
 	err = client.SendTransaction(ctx, signedTx)
 	if err != nil {
-		return "", fmt.Errorf("failed to send transaction: %v", err)  //todo : under price error we should retry
+		return "", fmt.Errorf("failed to send transaction: %v", err) //todo : under price error we should retry
 	}
 
 	txHash := signedTx.Hash().Hex()
