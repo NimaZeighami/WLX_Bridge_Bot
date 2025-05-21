@@ -89,7 +89,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	fromAmountDec, err := strconv.Atoi(quoteResponse.Data.TxData.FromTokenAmount)
+	fromAmountDec, err := strconv.ParseFloat(quoteResponse.Data.TxData.FromTokenAmount, 64)
 	if err != nil {
 		log.Errorf("Failed to convert fromAmount to integer: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -97,8 +97,8 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	fromAmountInt := fromAmountDec / int(math.Pow(10, float64(quoteResponse.Data.TxData.FromTokenDecimal)))
-	fromAmount := strconv.Itoa(fromAmountInt)
+	fromAmountFloat := fromAmountDec / math.Pow(10, float64(quoteResponse.Data.TxData.FromTokenDecimal))
+	fromAmount := strconv.FormatFloat(fromAmountFloat, 'f', -1, 64)
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"toTokenAmount":   quoteResponse.Data.TxData.ToTokenAmount,
