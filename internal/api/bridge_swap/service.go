@@ -2,7 +2,7 @@ package bridge_swap
 
 import (
 	"bridgebot/internal/client/http/bridgers"
-	"bridgebot/internal/contracts"
+	"bridgebot/internal/constants"
 	"bridgebot/internal/database/models"
 	"bridgebot/internal/services"
 	log "bridgebot/internal/utils/logger"
@@ -29,19 +29,32 @@ type BridgeProvider interface {
 
 //  TODO: Implement BridgeProvider Interface for each of them
 //* ADD sturct and these 2 method for  The Bridgers and other bridge providers for implementing BridgeProvider Interface
-
 var ChainsDecimal = map[string]int{
-	"BSC":     contracts.USDT_BSC_Decimal,
-	"ETH":     contracts.USDT_BSC_Decimal,
-	"POLYGON": contracts.USDT_POLYGON_Decimal,
-	"TRX":     contracts.USDT_TRC20_Decimal,
+	"ETH":     constants.Chains[0].SupportedTokens[0].Decimal,
+	"BSC":     constants.Chains[1].SupportedTokens[0].Decimal,
+	"POLYGON": constants.Chains[2].SupportedTokens[0].Decimal,
+	"TRX":     constants.Chains[3].SupportedTokens[0].Decimal,
 }
 
 var USDTContractAdresses = map[string]string{
-	"BSC":     contracts.USDT_BSC_Addr,
-	"ETH":     contracts.USDT_BSC_Addr,
-	"POLYGON": contracts.USDT_POLYGON_Addr,
-	"TRX":     contracts.USDT_TRC20_Addr,
+	"ETH":     constants.Chains[0].SupportedTokens[0].ContractAddr,
+	"BSC":     constants.Chains[1].SupportedTokens[0].ContractAddr,
+	"POLYGON": constants.Chains[2].SupportedTokens[0].ContractAddr,
+	"TRX":     constants.Chains[3].SupportedTokens[0].ContractAddr,
+}
+
+var USDTSymbol = map[string]string{
+	"ETH":     constants.Chains[0].SupportedTokens[0].Symbol,
+	"BSC":     constants.Chains[1].SupportedTokens[0].Symbol,
+	"POLYGON": constants.Chains[2].SupportedTokens[0].Symbol,
+	"TRX":     constants.Chains[3].SupportedTokens[0].Symbol,
+}
+
+var USDTCoinCode = map[string]string{
+	"ETH":     constants.Chains[0].SupportedTokens[0].CoinCode,
+	"BSC":     constants.Chains[1].SupportedTokens[0].CoinCode,
+	"POLYGON": constants.Chains[2].SupportedTokens[0].CoinCode,
+	"TRX":     constants.Chains[3].SupportedTokens[0].CoinCode,
 }
 
 // ChainDecimal returns the decimal precision for the given chain symbol.
@@ -56,6 +69,22 @@ func ChainDecimal(chainSymbol string) int {
 func USDTContractAdress(chainSymbol string) string {
 	if contractAddress, ok := USDTContractAdresses[chainSymbol]; ok {
 		return contractAddress
+	}
+	return ""
+}
+
+// TokenCoinCode returns the coin code for the given chain symbol.
+func TokenCoinCode(chainSymbol string) string {
+	if coinCode, ok := USDTCoinCode[chainSymbol]; ok {
+		return coinCode
+	}
+	return ""
+}
+
+// TokenSymbol returns the symbol of token for the given chain symbol.
+func TokenSymbol(chainSymbol string) string {
+	if TokenSymbol, ok := USDTSymbol[chainSymbol]; ok {
+		return TokenSymbol
 	}
 	return ""
 }
@@ -93,6 +122,10 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.
 
 	fromTokenAddr := USDTContractAdress(req.FromTokenChain)
 	toTokenAddr := USDTContractAdress(req.ToTokenChain)
+	// fromSymbol := TokenSymbol(req.FromTokenChain)
+	// toSymbol := TokenSymbol(req.ToTokenChain)
+	// fromCode := TokenCoinCode(req.FromTokenChain)
+	// toCode := TokenCoinCode(req.ToTokenChain)
 
 	quoteReq := bridgers.QuoteRequest{
 		FromTokenAddress: fromTokenAddr,
@@ -136,7 +169,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	if err := s.DB.First(&quote, quoteID).Error; err != nil {
 		return "", fmt.Errorf("quote not found")
 	}
-	// ! Uncomment
+
 	fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
 	if err != nil {
 		return "", fmt.Errorf("invalid from amount: %v", err)
@@ -172,7 +205,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 		quote.ToAddress,
 		fromToken,
 		toToken,
-		quote.ToAmountMin, // TODO: toAmountMin has wrong value in database it is equal to fromAmount and it should fixed 
+		quote.ToAmountMin, 
 		fromAmount)
 
 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
