@@ -27,8 +27,9 @@ type BridgeProvider interface {
 	Bridge()
 }
 
-//  TODO: Implement BridgeProvider Interface for each of them
-//* ADD sturct and these 2 method for  The Bridgers and other bridge providers for implementing BridgeProvider Interface
+//	TODO: Implement BridgeProvider Interface for each of them
+//
+// * ADD sturct and these 2 method for  The Bridgers and other bridge providers for implementing BridgeProvider Interface
 var ChainsDecimal = map[string]int{
 	"ETH":     constants.Chains[0].SupportedTokens[0].Decimal,
 	"BSC":     constants.Chains[1].SupportedTokens[0].Decimal,
@@ -92,29 +93,6 @@ func TokenSymbol(chainSymbol string) string {
 func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.QuoteResponse, uint, error) {
 	equipmentNo := services.GenerateEquipmentNo(req.FromWalletAddress)
 
-	log.Infof("DB: %#v", s.DB)
-	var pairs []models.NetworkTokenPair
-	if err := s.DB.Find(&pairs).Error; err != nil {
-		log.Errorf("Error fetching token pairs: %v", err)
-		return nil, 0, fmt.Errorf("failed to fetch token pairs")
-	}
-
-	isPairValid := false
-	for _, p := range pairs {
-		if strings.EqualFold(p.FromTokenSymbol, req.FromToken) &&
-			strings.EqualFold(p.FromNetworkSymbol, req.FromTokenChain) &&
-			strings.EqualFold(p.ToTokenSymbol, req.ToToken) &&
-			strings.EqualFold(p.ToNetworkSymbol, req.ToTokenChain) {
-			isPairValid = true
-			break
-		}
-	}
-	if !isPairValid {
-		log.Errorf("Invalid token pair: %s-%s to %s-%s", req.FromToken, req.FromTokenChain, req.ToToken, req.ToTokenChain)
-		return nil, 0, fmt.Errorf("invalid token pair")
-	}
-
-	// Handling TokenDecimal and return in string type
 	fromAmount := float64(req.FromTokenAmount) * math.Pow(10, float64(ChainDecimal(req.FromTokenChain)))
 	fromAmountStr := strconv.FormatFloat(fromAmount, 'f', -1, 64)
 
@@ -196,16 +174,14 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 
 	fromToken := quote.FromTokenAddress
 
-
 	toToken := quote.ToTokenAddress
-
 
 	callReq := services.BuildCalldataRequest(
 		quote.FromAddress,
 		quote.ToAddress,
 		fromToken,
 		toToken,
-		quote.ToAmountMin, 
+		quote.ToAmountMin,
 		fromAmount)
 
 	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)

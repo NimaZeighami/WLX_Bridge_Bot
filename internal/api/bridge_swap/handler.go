@@ -1,14 +1,14 @@
 package bridge_swap
 
 import (
+	"bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
+	"github.com/labstack/echo/v4"
 	"math"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/labstack/echo/v4"
 )
 
 var universalWalletRegex = regexp.MustCompile(`^[a-zA-Z0-9]{26,64}$`)
@@ -18,52 +18,37 @@ func isValidUniversalWalletAddress(addr string) bool {
 	return universalWalletRegex.MatchString(addr)
 }
 
-// helper function to check if a value exists in a slice
-func isAllowed(value string, allowed []string) bool {
-	for _, v := range allowed {
-		if strings.EqualFold(v, value) {
-			return true
-		}
-	}
-	return false
-}
 
 func (s *SwapServer) HandleQuote(c echo.Context) error {
 	var req QuoteReq
-
+	var pairs []models.NetworkTokenPair
+	
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid JSON format",
 		})
 	}
-
-	if err := c.Validate(req); err != nil {
+	if err := s.DB.Find(&pairs).Error; err != nil {
+		log.Errorf("Error fetching token pairs: %v", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": err.Error(),
+			"error": "failed to fetch token pairs",
 		})
 	}
 
-	allowedTokens := []string{"USDT"}
-	if !isAllowed(req.FromToken, allowedTokens) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Unsupported fromToken: only USDT is allowed",
-		})
+	isPairValid := false
+	for _, p := range pairs {
+		if strings.EqualFold(p.FromTokenSymbol, req.FromToken) &&
+			strings.EqualFold(p.FromNetworkSymbol, req.FromTokenChain) &&
+			strings.EqualFold(p.ToTokenSymbol, req.ToToken) &&
+			strings.EqualFold(p.ToNetworkSymbol, req.ToTokenChain) {
+			isPairValid = true
+			break
+		}
 	}
-	if !isAllowed(req.ToToken, allowedTokens) {
+	if !isPairValid {
+		log.Errorf("Invalid token pair: %s-%s to %s-%s", req.FromToken, req.FromTokenChain, req.ToToken, req.ToTokenChain)
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Unsupported toToken: only USDT is allowed",
-		})
-	}
-
-	allowedChains := []string{"BSC", "POLYGON", "TRX"}
-	if !isAllowed(req.FromTokenChain, allowedChains) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid fromTokenChain: must be one of BSC, Polygon, or TRX(not tron based on bridgers !)",
-		})
-	}
-	if !isAllowed(req.ToTokenChain, allowedChains) {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid toTokenChain: must be one of BSC, Polygon, or TRX(not tron based on bridgers !)",
+			"error": "invalid token pair",
 		})
 	}
 
@@ -151,7 +136,7 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 		"tx_hash":  txHash,
 		"quote_id": req.QuoteId,
 	})
-	// TODO: ADD other messages like : "Swap failed" 
+	// TODO: ADD other messages like : "Swap failed"
 	// TODO: ADD implement other bridgers API for tracking Transaction Status
-	// TODO: ADD other status updater function based on New API Response ...  expired, confirmed (mined), success (mind and funds recieved) 
+	// TODO: ADD other status updater function based on New API Response ...  expired, confirmed (mined), success (mind and funds recieved)
 }
