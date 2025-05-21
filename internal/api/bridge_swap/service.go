@@ -8,12 +8,12 @@ import (
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
+	"gorm.io/gorm"
 	"math"
 	"math/big"
 	"strconv"
 	"strings"
-
-	"gorm.io/gorm"
+	"time"
 )
 
 type SwapServer struct {
@@ -184,19 +184,72 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 		quote.ToAmountMin,
 		fromAmount)
 
-	txHash, err := services.ExecuteBridgeTransaction(ctx, callReq)
-	if err != nil {
+	txHash, broadcastErr := services.ExecuteBridgeTransaction(ctx, callReq)
+	if broadcastErr != nil {
 		s.DB.Model(&quote).Updates(map[string]interface{}{
 			"state":   "Broadcast_failed",
 			"tx_hash": "",
 		})
-		return "", fmt.Errorf("transaction failed: %v", err)
+		return "", fmt.Errorf("transaction failed: %v", broadcastErr)
 	}
 
 	s.DB.Model(&quote).Updates(map[string]interface{}{
 		"state":   "broadcast",
 		"tx_hash": txHash,
 	})
+
+	orderResp, err := bridgers.FetchOrderId(ctx, bridgers.GenerateOrderIdRequest{
+		Hash:             txHash,
+		FromTokenAddress: quote.FromTokenAddress,
+		ToTokenAddress:   quote.ToTokenAddress,
+		FromAddress:      quote.FromAddress,
+		ToAddress:        quote.ToAddress,
+		FromTokenChain:   quote.FromChain,
+		ToTokenChain:     quote.ToChain,
+		FromTokenAmount:  quote.FromAmount,
+		AmountOutMin:     quote.ToAmountMin,
+		FromCoinCode:     quote.FromCoinCode,
+		ToCoinCode:       quote.ToCoinCode,
+		EquipmentNo:      services.GenerateEquipmentNo(quote.FromAddress),
+		SourceFlag:       "WBB",
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to get order ID: %v", err)
+	}
+	orderId := orderResp.Data.OrderID
+	s.DB.Model(&quote).Updates(map[string]interface{}{
+		"order_id": orderId,
+	})
+
+	log.Infof("Order ID: %s, Quote ID: %v", orderId, quote.ID)
+
+	go func(orderId string, quoteId uint) {
+		pollCtx := context.Background()
+		maxRetries := 24 // 24 x 5min = 2h
+		for i := 0; i < maxRetries; i++ {
+			time.Sleep(5 * time.Minute)
+
+			resp, err := bridgers.FetchTXDetails(pollCtx, bridgers.OrderIdContainer{
+				OrderID: orderId,
+			})
+			if err != nil {
+				log.Errorf("Polling failed for quote %d (try %d): %v", quoteId, i+1, err)
+				continue
+			}
+
+			status := resp.Data.Status
+			log.Infof("Polling attempt %d for quote %d: status=%s", i+1, quoteId, status)
+
+			if status == "receive_complete" {
+				s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "completed")
+				break
+			}
+			if strings.HasPrefix(status, "error") || status == "expired" {
+				s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "failed")
+				break
+			}
+		}
+	}(quote.OrderId, quote.ID)
 
 	return txHash, nil
 }

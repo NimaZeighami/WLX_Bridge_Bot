@@ -23,7 +23,7 @@ func main() {
 }
 
 // TODO:
-// *  1. Fix the bridge quote from Token Amount field (decimal issue)
+// *  1. Fix the bridge quote from Token Amount field (decimal issue)  
 // !  2. Update the quote migration and update the quote struct
 // ?  3. Add token , chain struct and chains variable in the constants package
 // *  4. Add the rest of  bridgers APIs for tracking state of the transaction

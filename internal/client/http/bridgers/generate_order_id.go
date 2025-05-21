@@ -22,11 +22,6 @@ type GenerateOrderIdRequest struct {
 	EquipmentNo      string `json:"equipmentNo"`
 	SourceType       string `json:"sourceType,omitempty"`
 	SourceFlag       string `json:"sourceFlag"`
-	Slippage         string `json:"slippage,omitempty"`
-	UtmSource        string `json:"utmSource,omitempty"`
-	OrderId          string `json:"orderId,omitempty"`
-	SessionUuid      string `json:"sessionUuid,omitempty"`
-	UserNo           string `json:"userNo,omitempty"`
 }
 
 type OrderIdResponse struct {
@@ -42,8 +37,6 @@ func FetchOrderId(ctx context.Context, request GenerateOrderIdRequest) (*OrderId
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
-
-	log.Infof("Sending order id request : %+v", request)
 
 	response, err := http.Post[OrderIdResponse](ctx, url, headers, request)
 	if err != nil {

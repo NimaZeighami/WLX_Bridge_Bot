@@ -14,6 +14,7 @@ CREATE TABLE quotes (
     from_amount DECIMAL(65, 0) NOT NULL,
     to_amount_min DECIMAL(65, 0) NOT NULL,
     tx_hash VARCHAR(100),
+    order_id VARCHAR(100),
     state ENUM('started', 'approved', 'broadcast', 'verified', 'approval_failed', 'broadcast_failed', 'failed') NOT NULL DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

@@ -48,6 +48,7 @@ type NetworkTokenPair struct {
 
 type Quote struct {
 	ID               uint      `gorm:"primaryKey"`
+	OrderId          string    `gorm:"column:order_id"`
 	FromTokenAddress string    `gorm:"column:from_token_address"`
 	ToTokenAddress   string    `gorm:"column:to_token_address"`
 	FromChain        string    `gorm:"column:from_chain"`
