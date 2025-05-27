@@ -23,11 +23,6 @@ func main() {
 }
 
 // TODO:
-// *  1. Fix the bridge quote from Token Amount field (decimal issue)  
-// !  2. Update the quote migration and update the quote struct
-// ?  3. Add token , chain struct and chains variable in the constants package
-// *  4. Add the rest of  bridgers APIs for tracking state of the transaction
-// !  5. Fix duplcate swap for the same quote ID
-// ?  6. Add proper state management for the swap
-// *  7. Add getQuoteDetails API
-// !  8. add a worker wating for the transaction to be verified
+// ?  1. fix the worker with crunjob and update the state to verified 
+// *  2. Add get Quote Details API
+// !  3. Add bridge provider interface 
