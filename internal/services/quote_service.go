@@ -8,13 +8,13 @@ import (
 	"fmt"
 )
 
-func BuildQuoteRequest(userAddr string, fromTokenAddr, toTokenAddr string) bridgers.QuoteRequest {
+func BuildQuoteRequest(userAddr, fromTokenAddr, toTokenAddr, fromTokenChain, toTokenChain string, bridgingAmount uint) bridgers.QuoteRequest {
 	return bridgers.QuoteRequest{
 		FromTokenAddress: fromTokenAddr,
 		ToTokenAddress:   toTokenAddr,
-		FromTokenAmount:  fmt.Sprintf("%d", BridgingAmount),
-		FromTokenChain:   "POLYGON",
-		ToTokenChain:     "BSC",
+		FromTokenAmount:  fmt.Sprintf("%d", bridgingAmount),
+		FromTokenChain:   fromTokenChain,
+		ToTokenChain:     toTokenChain,
 		UserAddr:         userAddr,
 		EquipmentNo:      GenerateEquipmentNo(userAddr),
 		SourceFlag:       "WLXBridgeApp",

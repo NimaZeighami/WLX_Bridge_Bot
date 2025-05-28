@@ -10,7 +10,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
-	// ! Uncomment these 2 if we need use without API verion
+	"strconv"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -71,8 +71,13 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	// ! Uncomment this if we need use without API verion ↓↓↓
 	spenderAddress := common.HexToAddress("0xb685760ebd368a891f27ae547391f4e2a289895b") // Bridge contract
-	tokenAddress := common.HexToAddress(polygon.TokenAddress)                           // USDT contract
-	amount := big.NewInt(BridgingAmount)
+	tokenAddress := common.HexToAddress(polygon.TokenAddress)    
+	FromTokenAmount , err:=strconv.ParseInt(request.FromTokenAmount,10 , 64)
+	if  err != nil {
+		log.Errorf("Error parsing token Amount : %v", err)
+	}
+
+	amount := big.NewInt(FromTokenAmount)
 
 	needsApproval, err := polygon.IsApprovalNeeded(client, tokenAddress, fromAddress, spenderAddress, amount)
 	if err != nil {

@@ -22,10 +22,7 @@ type SwapServer struct {
 
 // TODO:  Make ProcessQuote and ProcessSwap methods more generic to handle different bridge providers
 
-type BridgeProvider interface {
-	Quote()
-	Bridge()
-}
+
 
 //	TODO: Implement BridgeProvider Interface for each of them
 //
@@ -157,7 +154,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	// 	return "", fmt.Errorf("approval failed: %v", revokeErr)
 	// }
 
-	// TODO: like Polygon we should check chain and based on that have approval (Switch-Case)
+	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
 		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, fromAmount)
 		if isApprovalNeeded {

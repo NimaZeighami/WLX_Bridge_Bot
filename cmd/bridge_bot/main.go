@@ -25,4 +25,4 @@ func main() {
 // TODO:
 // ?  1. fix the worker with crunjob and update the state to verified 
 // *  2. Add get Quote Details API
-// !  3. Add bridge provider interface 
+// !  3. Add bridge provider interface (after learning interface and reading oop from designpattern)

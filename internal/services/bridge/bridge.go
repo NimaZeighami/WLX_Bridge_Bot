@@ -1,20 +1,14 @@
-// Bridger interface (GetQuote, Approve, Sign, Broadcast)
-
 package bridge
-
-import (
-	"context"
-)
-
-type Bridger interface {
-	GetQuote(ctx context.Context, req QuoteRequest) (QuoteResponse, error)
-    // TODO: Uncomment and implement the following methods as needed
-	// IsApproveNeeded(ctx context.Context, req ApproveRequest) (ApproveResponse, error)
-	// Approve(ctx context.Context, req ApproveRequest) (ApproveResponse, error)
-	// Sign(ctx context.Context, req SignRequest) (SignedTransaction, error)
-	// Broadcast(ctx context.Context, tx SignedTransaction) (BroadcastResult, error)
+type BridgeProvider interface {
+	Quote(fromAmount int, fromToken, fromChain, toToken, toChain string) (amountOut int, err error)
+	ApprovalNeeded(fromAddress ,FromTokenAddress string, requiredAmount int) (bool, error)
+	Approve(fromAddress ,FromTokenAddress string, requiredAmount int) error
+	CallData(any) (any , error)
+	Sign(txData any)(signedTx string, err error)
+	BroadCast(signedTx string) (txHash string, err error)
 }
 
+//todo: make request and reponse struct 
 type QuoteRequest struct {
 	FromToken         string  `json:"fromToken"`
 	FromTokenChain         string  `json:"fromTokenChain"`

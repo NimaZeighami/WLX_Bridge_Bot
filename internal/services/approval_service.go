@@ -17,9 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const (
-	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
-)
+// const (
+// 	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
+// )
 
 func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddress string, requiredAmount *big.Int) bool {
 	client, err := polygon.NewPolygonClient()
