@@ -13,7 +13,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
-	"time"
+	// "time"
 )
 
 type SwapServer struct {
@@ -220,33 +220,33 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 
 	log.Infof("Order ID: %s, Quote ID: %v", orderId, quote.ID)
 
-	go func(orderId string, quoteId uint) {
-		pollCtx := context.Background()
-		maxRetries := 24 // 24 x 5min = 2h
-		for i := 0; i < maxRetries; i++ {
-			time.Sleep(5 * time.Minute)
+	// go func(orderId string, quoteId uint) {
+	// 	pollCtx := context.Background()
+	// 	maxRetries := 24 // 24 x 5min = 2h
+	// 	for i := 0; i < maxRetries; i++ {
+	// 		time.Sleep(5 * time.Minute)
 
-			resp, err := bridgers.FetchTXDetails(pollCtx, bridgers.OrderIdContainer{
-				OrderID: orderId,
-			})
-			if err != nil {
-				log.Errorf("Polling failed for quote %d (try %d): %v", quoteId, i+1, err)
-				continue
-			}
+	// 		resp, err := bridgers.FetchTXDetails(pollCtx, bridgers.OrderIdContainer{
+	// 			OrderID: orderId,
+	// 		})
+	// 		if err != nil {
+	// 			log.Errorf("Polling failed for quote %d (try %d): %v", quoteId, i+1, err)
+	// 			continue
+	// 		}
 
-			status := resp.Data.Status
-			log.Infof("Polling attempt %d for quote %d: status=%s", i+1, quoteId, status)
+	// 		status := resp.Data.Status
+	// 		log.Infof("Polling attempt %d for quote %d: status=%s", i+1, quoteId, status)
 
-			if status == "receive_complete" {
-				s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "completed")
-				break
-			}
-			if strings.HasPrefix(status, "error") || status == "expired" {
-				s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "failed")
-				break
-			}
-		}
-	}(quote.OrderId, quote.ID)
+	// 		if status == "receive_complete" {
+	// 			s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "completed")
+	// 			break
+	// 		}
+	// 		if strings.HasPrefix(status, "error") || status == "expired" {
+	// 			s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "failed")
+	// 			break
+	// 		}
+	// 	}
+	// }(quote.OrderId, quote.ID)
 
 	return txHash, nil
 }
