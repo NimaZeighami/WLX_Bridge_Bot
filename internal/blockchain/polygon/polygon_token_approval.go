@@ -126,7 +126,6 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 		GasPrice: gasPrice,
 	}
 
-	// TODO: Check this
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
 		// If estimation fails, use a default gas limit
@@ -160,9 +159,9 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 }
 
 // GetCurrentAllowance queries the token contract for the current allowance granted by owner to spender.
-func GetCurrentAllowance(client *ethclient.Client, tokenAddress, owner, spender common.Address) (*big.Int, error) {
+func GetCurrentAllowance(client *ethclient.Client, tokenAddress, fromWalletAddress, bridgeProviderContractAddr common.Address) (*big.Int, error) {
 	ctx := context.Background()
-	data, err := erc20ParsedABI.Pack("allowance", owner, spender)
+	data, err := erc20ParsedABI.Pack("allowance", fromWalletAddress, bridgeProviderContractAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack allowance data: %w", err)
 	}
@@ -189,8 +188,8 @@ func GetCurrentAllowance(client *ethclient.Client, tokenAddress, owner, spender 
 }
 
 // IsApprovalNeeded checks whether the current allowance is less than the required amount.
-func IsApprovalNeeded(client *ethclient.Client, tokenAddress, owner, spender common.Address, requiredAmount *big.Int) (bool, error) {
-	currentAllowance, err := GetCurrentAllowance(client, tokenAddress, owner, spender)
+func IsApprovalNeeded(client *ethclient.Client, tokenAddress, fromWalletAddress, bridgeProviderContractAddr common.Address, requiredAmount *big.Int) (bool, error) {
+	currentAllowance, err := GetCurrentAllowance(client, tokenAddress, fromWalletAddress, bridgeProviderContractAddr)
 	if err != nil {
 		return false, err
 	}
@@ -198,10 +197,10 @@ func IsApprovalNeeded(client *ethclient.Client, tokenAddress, owner, spender com
 }
 
 // ApproveContract sends an approval transaction to allow spender to spend a specified amount.
-func ApproveContract(client *ethclient.Client, tokenAddress, spender common.Address, amount *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
+func ApproveContract(client *ethclient.Client, tokenAddress, bridgeProviderContractAddr common.Address, amount *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
 	ctx := context.Background()
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-	data, err := erc20ParsedABI.Pack("approve", spender, amount)
+	data, err := erc20ParsedABI.Pack("approve", bridgeProviderContractAddr, amount)
 	if err != nil {
 		return "", fmt.Errorf("failed to pack approve data: %w", err)
 	}
@@ -209,16 +208,16 @@ func ApproveContract(client *ethclient.Client, tokenAddress, spender common.Addr
 }
 
 // RevokeApproval revokes any previously granted approval by setting the allowance to zero.
-func RevokeApproval(client *ethclient.Client, tokenAddress, spender common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
+func RevokeApproval(client *ethclient.Client, tokenAddress, bridgeProviderContractAddr common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
 	// Revocation is typically done by approving 0.
-	return ApproveContract(client, tokenAddress, spender, big.NewInt(0), privateKey)
+	return ApproveContract(client, tokenAddress, bridgeProviderContractAddr, big.NewInt(0), privateKey)
 }
 
 // IncreaseAllowance increases the current allowance by the specified added value.
-func IncreaseAllowance(client *ethclient.Client, tokenAddress, spender common.Address, addedValue *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
+func IncreaseAllowance(client *ethclient.Client, tokenAddress, bridgeProviderContractAddr common.Address, addedValue *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
 	ctx := context.Background()
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-	data, err := erc20ParsedABI.Pack("increaseAllowance", spender, addedValue)
+	data, err := erc20ParsedABI.Pack("increaseAllowance", bridgeProviderContractAddr, addedValue)
 	if err != nil {
 		return "", fmt.Errorf("failed to pack increaseAllowance data: %w", err)
 	}

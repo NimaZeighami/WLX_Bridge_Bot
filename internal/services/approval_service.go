@@ -21,19 +21,19 @@ import (
 // 	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
 // )
 
-func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddress string, requiredAmount *big.Int) bool {
+func CheckPolygonApproval(ctx context.Context, fromWalletAddress, bridgeProviderContractAddr, TokenContractAddress string, requiredAmount *big.Int) (bool, error) {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
+		return false, err
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
-	spender := common.HexToAddress(owner)
-	// requiredAmount := big.NewInt(BridgingAmount)
 
 	log.Info("Checking if approval is needed...")
-	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(owner), spender, requiredAmount)
+	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(fromWalletAddress), common.HexToAddress(bridgeProviderContractAddr), requiredAmount)
 	if err != nil {
 		log.Fatalf("Error checking approval status: %v", err)
+		return false, err
 	}
 
 	if !isNeeded {
@@ -41,10 +41,10 @@ func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddres
 	} else {
 		log.Info("Approval is needed!!")
 	}
-	return isNeeded
+	return isNeeded, nil
 }
 
-func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddress, spenderAddress string, requiredAmount *big.Int) error {
+func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProviderContractAddress string, requiredAmount *big.Int) error {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
@@ -59,10 +59,10 @@ func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddre
 		return err
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
-	spender := common.HexToAddress(spenderAddress)
+	bridgeProviderContractAddr := common.HexToAddress(bridgeProviderContractAddress)
 	// requiredAmount := big.NewInt(BridgingAmount)
 
-	txHash, err := polygon.ApproveContract(client, tokenAddress, spender, requiredAmount, privateKey)
+	txHash, err := polygon.ApproveContract(client, tokenAddress, bridgeProviderContractAddr, requiredAmount, privateKey)
 	if err != nil {
 		log.Fatalf("Error approving contract: %v", err)
 		return err

@@ -1,11 +1,13 @@
 package thebridgers
 
 import (
+	"bridgebot/configs"
 	"bridgebot/internal/client/http/bridgers"
 	"bridgebot/internal/services"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
+	"math/big"
 	"strconv"
 )
 
@@ -25,13 +27,13 @@ func BuildQuoteRequest(userAddress, fromTokenAddr, toTokenAddr, fromTokenChain, 
 	}
 }
 
-func RequestQuote(ctx context.Context, req bridgers.QuoteRequest) (*bridgers.QuoteResponse,error) {
+func RequestQuote(ctx context.Context, req bridgers.QuoteRequest) (*bridgers.QuoteResponse, error) {
 	resp, err := bridgers.FetchQuote(ctx, req)
 	if err != nil {
 		log.Errorf("Error fetching quote: %v", err)
-		return nil , err
+		return nil, err
 	}
-	return resp , nil
+	return resp, nil
 }
 
 func (b *TheBridgers) Quote(userAddr string, fromAmount int, fromTokenAddr, fromChain, toTokenAddr, toChain string, ctx context.Context) (int64, error) {
@@ -39,24 +41,29 @@ func (b *TheBridgers) Quote(userAddr string, fromAmount int, fromTokenAddr, from
 	quoteRes, err := RequestQuote(ctx, quoteReq)
 	if err != nil {
 		log.Errorf("Error fetching the bridgers quote: %v", err)
-		return 0 , err
+		return 0, err
 	}
-	toTokenAmount , err:=strconv.ParseInt(quoteRes.Data.TxData.ToTokenAmount,10 , 64)
-	if  err != nil {
+	toTokenAmount, err := strconv.ParseInt(quoteRes.Data.TxData.ToTokenAmount, 10, 64)
+	if err != nil {
 		log.Errorf("Error parsing token Amount : %v", err)
-		return 0 , err
+		return 0, err
 	}
 
 	return toTokenAmount, nil
 }
 
-func (b *TheBridgers) ApprovalNeeded(fromAddress, fromTokenAddress string, requiredAmount int) (bool, error) {
+func (b *TheBridgers) ApprovalNeeded(fromAddress, fromTokenAddress string, requiredAmount int, ctx context.Context) (bool, error) {
+	IsApprovalNeeded, err := services.CheckPolygonApproval(ctx, fromAddress,configs.GetBridgersContractAddr("POLYGON"), fromTokenAddress, big.NewInt(int64(requiredAmount)))
+	if err != nil {
+		log.Errorf("Error Checking Approval: %v", err)
 
-	return true, nil
+		return false, err
+	}
+	return IsApprovalNeeded, nil
 }
 
-func (b *TheBridgers) Approve(fromAddress, fromTokenAddress string, requiredAmount int) error {
-	// از services.SubmitPolygonApproval استفاده کن
+func (b *TheBridgers) Approve(fromAddress, fromTokenAddress, contractAddress string, requiredAmount int, ctx context.Context) error {
+	services.SubmitPolygonApproval(ctx,fromTokenAddress,configs.GetBridgersContractAddr("POlYGON"),big.NewInt(int64(requiredAmount)))
 	return nil
 }
 

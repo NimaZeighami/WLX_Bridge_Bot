@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	// "time"
+	"bridgebot/configs"
 )
 
 type SwapServer struct {
@@ -21,8 +22,6 @@ type SwapServer struct {
 }
 
 // TODO:  Make ProcessQuote and ProcessSwap methods more generic to handle different bridge providers
-
-
 
 //	TODO: Implement BridgeProvider Interface for each of them
 //
@@ -156,9 +155,9 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 
 	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
-		isApprovalNeeded := services.CheckPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, fromAmount)
+		isApprovalNeeded, _ := services.CheckPolygonApproval(ctx, quote.FromAddress,configs.GetBridgersContractAddr("POLYGON"), quote.FromTokenAddress, fromAmount)
 		if isApprovalNeeded {
-			err := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
+			err := services.SubmitPolygonApproval(ctx, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
 			if err != nil {
 				s.DB.Model(&quote).Update("state", "approval_failed")
 				return "", fmt.Errorf("approval failed: %v", err)
