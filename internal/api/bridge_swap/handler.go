@@ -28,6 +28,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 			"error": "Invalid JSON format",
 		})
 	}
+	
 	if err := s.DB.Find(&pairs).Error; err != nil {
 		log.Errorf("Error fetching token pairs: %v", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -66,7 +67,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 
 	log.Infof("Received swap request: %+v", req)
 
-	quoteResponse, quoteId, err := s.ProcessQuote(c.Request().Context(), req)
+	amountIn ,toAmount, quoteId, err := s.ProcessQuote(c.Request().Context(), req)
 	if err != nil {
 		log.Errorf("Swap failed: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -74,7 +75,7 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	fromAmountDec, err := strconv.ParseFloat(quoteResponse.Data.TxData.FromTokenAmount, 64)
+	fromAmountDec, err := strconv.ParseFloat(amountIn, 64)
 	if err != nil {
 		log.Errorf("Failed to convert fromAmount to integer: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -82,11 +83,11 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		})
 	}
 
-	fromAmountFloat := fromAmountDec / math.Pow(10, float64(quoteResponse.Data.TxData.FromTokenDecimal))
+	fromAmountFloat := fromAmountDec / math.Pow(10, float64(ChainDecimal(req.FromTokenChain)))
 	fromAmount := strconv.FormatFloat(fromAmountFloat, 'f', -1, 64)
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"toTokenAmount":   quoteResponse.Data.TxData.ToTokenAmount,
+		"toTokenAmount":   toAmount,
 		"toToken":         req.ToToken,
 		"toTokenChain":    req.ToTokenChain,
 		"fromTokenAmount": fromAmount,
@@ -94,12 +95,8 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 		"fromTokenChain":  req.FromTokenChain,
 		"bridge":          "The Bridgers1",
 		"quoteId":         strconv.FormatUint(uint64(quoteId), 10),
-		"estimatedTime":   strconv.FormatUint(uint64(quoteResponse.Data.TxData.EstimatedTime), 10),
-		// ? Note: Decimal values are intentionally omitted from the response to simplify the user experience.
-		// ? We get amount without decimal and we ourself send amount with decimal to the bridgers API. and
-		// ? Return the response to the user without decimal values.
-		// "fromTokenDecimal": quoteResponse.Data.TxData.FromTokenDecimal,
-		// "toTokenDecimal":   quoteResponse.Data.TxData.ToTokenDecimal,
+		"estimatedTime":   strconv.FormatUint(uint64(10), 10),
+		// ? Note: Decimal values are intentionally omitted from the response and request to simplify the user experience.
 	})
 }
 
@@ -149,7 +146,5 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 		"tx_hash":  txHash,
 		"quote_id": req.QuoteId,
 	})
-	// TODO: ADD other messages like : "Swap failed"
 	// TODO: ADD implement other bridgers API for tracking Transaction Status
-	// TODO: ADD other status updater function based on New API Response ...  expired, confirmed (mined), success (mind and funds recieved)
 }

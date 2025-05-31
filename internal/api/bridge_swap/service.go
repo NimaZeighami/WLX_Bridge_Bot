@@ -15,6 +15,8 @@ import (
 	"strings"
 	// "time"
 	"bridgebot/configs"
+	"bridgebot/internal/services/bridge"
+	// "bridgebot/internal/services/bridge/thebridgers"
 )
 
 type SwapServer struct {
@@ -86,60 +88,47 @@ func TokenSymbol(chainSymbol string) string {
 	return ""
 }
 
-func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (*bridgers.QuoteResponse, uint, error) {
-	equipmentNo := services.GenerateEquipmentNo(req.FromWalletAddress)
+func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (amountIn, amoutOut string, quoteID uint, err error) {
+	var bridger bridge.BridgeProvider
 
 	fromAmount := float64(req.FromTokenAmount) * math.Pow(10, float64(ChainDecimal(req.FromTokenChain)))
 	fromAmountStr := strconv.FormatFloat(fromAmount, 'f', -1, 64)
 
-	log.Warnf("From Amount: %v", fromAmountStr)
+	bridger = bridge.SelectBestBridger()
 
-	quoteReq := bridgers.QuoteRequest{
-		FromTokenAddress: USDTContractAdress(req.FromTokenChain),
-		ToTokenAddress:   USDTContractAdress(req.ToTokenChain),
-		FromTokenAmount:  fromAmountStr,
-		FromTokenChain:   req.FromTokenChain,
-		ToTokenChain:     req.ToTokenChain,
-		UserAddr:         req.FromWalletAddress,
-		EquipmentNo:      equipmentNo,
-		SourceFlag:       "WBB",
-	}
-
-	quoteResp, err := bridgers.FetchQuote(ctx, quoteReq)
+	toAmount, err := bridge.FetchQuoteAmount(bridger, fromAmountStr, USDTContractAdress(req.FromTokenChain), req.FromTokenChain, USDTContractAdress(req.ToTokenChain), req.ToTokenChain, req.FromWalletAddress, ctx)
 	if err != nil {
-		log.Errorf("failed to fetch quote: %w", err)
-		return nil, 0, fmt.Errorf("failed to fetch quote")
+		log.Errorf("failed to fetch quote amount: %v", err)
+		return fromAmountStr, "0", 0, fmt.Errorf("failed to fetch quote amount: %w", err)
 	}
-	// TODO: Tokens table can be omit because it is additional
+
 	quote := models.Quote{
 		FromTokenAddress: USDTContractAdress(req.FromTokenChain),
 		ToTokenAddress:   USDTContractAdress(req.ToTokenChain),
-		FromChain:        quoteReq.FromTokenChain,
-		ToChain:          quoteReq.ToTokenChain,
+		FromChain:        req.FromTokenChain,
+		ToChain:          req.ToTokenChain,
 		FromToken:        TokenSymbol(req.FromTokenChain),
 		ToToken:          TokenSymbol(req.ToTokenChain),
 		FromCoinCode:     TokenCoinCode(req.FromTokenChain),
 		ToCoinCode:       TokenCoinCode(req.ToTokenChain),
-		FromAddress:      quoteReq.UserAddr,
+		FromAddress:      req.FromWalletAddress,
 		ToAddress:        req.ToWalletAddress,
-		FromAmount:       quoteReq.FromTokenAmount,
-		ToAmountMin:      quoteResp.Data.TxData.AmountOutMin,
+		FromAmount:       fromAmountStr,
+		ToAmountMin:      toAmount,
 		TxHash:           "",
 		State:            "started",
 	}
 
 	if err := s.DB.Create(&quote).Error; err != nil {
 		log.Errorf("failed to insert quote: %v", err)
-		return nil, 0, fmt.Errorf("failed to store quote")
+		return fromAmountStr, toAmount, 0, fmt.Errorf("failed to store quote")
 	}
-	return quoteResp, quote.ID, nil
+	
+	return fromAmountStr, toAmount, quote.ID, nil
 }
 
 func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, error) {
 	var quote models.Quote
-	if err := s.DB.First(&quote, quoteID).Error; err != nil {
-		return "", fmt.Errorf("quote not found")
-	}
 
 	fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
 	if err != nil {
@@ -155,7 +144,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 
 	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
-		isApprovalNeeded, _ := services.CheckPolygonApproval(ctx, quote.FromAddress,configs.GetBridgersContractAddr("POLYGON"), quote.FromTokenAddress, fromAmount)
+		isApprovalNeeded, _ := services.CheckPolygonApproval(ctx, quote.FromAddress, configs.GetBridgersContractAddr("POLYGON"), quote.FromTokenAddress, fromAmount)
 		if isApprovalNeeded {
 			err := services.SubmitPolygonApproval(ctx, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
 			if err != nil {
