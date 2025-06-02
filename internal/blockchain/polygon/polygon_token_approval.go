@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
+
 const TokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" // Polygon  USDT Contract Address on Mainnet
 
 // extendedERC20ABI includes functions for approve, allowance, increaseAllowance, and decreaseAllowance.
@@ -71,7 +72,6 @@ const extendedERC20ABI = `
 // erc20ParsedABI is the parsed ABI for ERC20 functions.
 var erc20ParsedABI abi.ABI
 
-// todo: do this with sync cache and get
 func init() {
 	var err error
 	erc20ParsedABI, err = abi.JSON(strings.NewReader(extendedERC20ABI))
@@ -102,7 +102,7 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		// return "", fmt.Errorf("failed to suggest gas price: %w", err)
-		gasPrice = big.NewInt(100e9) //todo: Get Gas Price from latest block
+		gasPrice = big.NewInt(100e9)
 		log.Warnf("Failed to get suggested gas price, using default: %v", err)
 	}
 
@@ -128,34 +128,40 @@ func signAndSendTx(ctx context.Context, client *ethclient.Client, from common.Ad
 
 	gasLimit, err := client.EstimateGas(ctx, msg)
 	if err != nil {
-		gasLimit = uint64(100000)
+		// If estimation fails, use a default gas limit
+		gasLimit = uint64(500000)
 		log.Warnf("Gas estimation failed, using default gas limit: %v", err)
 	}
+	log.Infof("Estimated gas: %d, using gas limit: %d  in Approval !!!!Estimated gas", gasLimit, gasPrice)
 
+	// Build the transaction.
 	tx := types.NewTransaction(nonce, to, big.NewInt(0), gasLimit, gasPrice, data)
 
+	// Get chain ID.
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
 		chainID = big.NewInt(137) // Default to Polygon mainnet
 		log.Infof("Failed to get chain ID, defaulting to 137: %v", err)
 	}
 
+	// Sign the transaction.
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign transaction: %w", err)
 	}
 
+	// Send the transaction.
 	if err := client.SendTransaction(ctx, signedTx); err != nil {
-		return "", fmt.Errorf("failed to send transaction: %w", err)
+		return "", fmt.Errorf("failed to send transaction: %w", err)  //todo : under price error we should retry
 	}
 
 	return signedTx.Hash().Hex(), nil
 }
 
 // GetCurrentAllowance queries the token contract for the current allowance granted by owner to spender.
-func GetCurrentAllowance(client *ethclient.Client, tokenAddress, owner, spender common.Address) (*big.Int, error) {
+func GetCurrentAllowance(client *ethclient.Client, tokenAddress, fromWalletAddress, bridgeProviderContractAddr common.Address) (*big.Int, error) {
 	ctx := context.Background()
-	data, err := erc20ParsedABI.Pack("allowance", owner, spender)
+	data, err := erc20ParsedABI.Pack("allowance", fromWalletAddress, bridgeProviderContractAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack allowance data: %w", err)
 	}
@@ -182,8 +188,8 @@ func GetCurrentAllowance(client *ethclient.Client, tokenAddress, owner, spender 
 }
 
 // IsApprovalNeeded checks whether the current allowance is less than the required amount.
-func IsApprovalNeeded(client *ethclient.Client, tokenAddress, owner, spender common.Address, requiredAmount *big.Int) (bool, error) {
-	currentAllowance, err := GetCurrentAllowance(client, tokenAddress, owner, spender)
+func IsApprovalNeeded(client *ethclient.Client, tokenAddress, fromWalletAddress, bridgeProviderContractAddr common.Address, requiredAmount *big.Int) (bool, error) {
+	currentAllowance, err := GetCurrentAllowance(client, tokenAddress, fromWalletAddress, bridgeProviderContractAddr)
 	if err != nil {
 		return false, err
 	}
@@ -191,10 +197,10 @@ func IsApprovalNeeded(client *ethclient.Client, tokenAddress, owner, spender com
 }
 
 // ApproveContract sends an approval transaction to allow spender to spend a specified amount.
-func ApproveContract(client *ethclient.Client, tokenAddress, spender common.Address, amount *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
+func ApproveContract(client *ethclient.Client, tokenAddress, bridgeProviderContractAddr common.Address, amount *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
 	ctx := context.Background()
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-	data, err := erc20ParsedABI.Pack("approve", spender, amount)
+	data, err := erc20ParsedABI.Pack("approve", bridgeProviderContractAddr, amount)
 	if err != nil {
 		return "", fmt.Errorf("failed to pack approve data: %w", err)
 	}
@@ -202,15 +208,16 @@ func ApproveContract(client *ethclient.Client, tokenAddress, spender common.Addr
 }
 
 // RevokeApproval revokes any previously granted approval by setting the allowance to zero.
-func RevokeApproval(client *ethclient.Client, tokenAddress, spender common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
-	return ApproveContract(client, tokenAddress, spender, big.NewInt(0), privateKey)
+func RevokeApproval(client *ethclient.Client, tokenAddress, bridgeProviderContractAddr common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
+	// Revocation is typically done by approving 0.
+	return ApproveContract(client, tokenAddress, bridgeProviderContractAddr, big.NewInt(0), privateKey)
 }
 
 // IncreaseAllowance increases the current allowance by the specified added value.
-func IncreaseAllowance(client *ethclient.Client, tokenAddress, spender common.Address, addedValue *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
+func IncreaseAllowance(client *ethclient.Client, tokenAddress, bridgeProviderContractAddr common.Address, addedValue *big.Int, privateKey *ecdsa.PrivateKey) (string, error) {
 	ctx := context.Background()
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-	data, err := erc20ParsedABI.Pack("increaseAllowance", spender, addedValue)
+	data, err := erc20ParsedABI.Pack("increaseAllowance", bridgeProviderContractAddr, addedValue)
 	if err != nil {
 		return "", fmt.Errorf("failed to pack increaseAllowance data: %w", err)
 	}

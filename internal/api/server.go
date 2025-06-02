@@ -18,13 +18,17 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 
 func NewServer(swapServer *bridge_swap.SwapServer) *echo.Echo {
 	e := echo.New()
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	
+
 	e.Validator = &CustomValidator{validator: validator.New()}
-	// todo: Use ECHO Groupt 
-	e.POST("/v1/getQuote",  swapServer.HandleQuote)
-	e.POST("/v1/swap", swapServer.HandleSwap)
+
+	e.POST("/v1/quotes",  swapServer.HandleQuote)
+
+	e.POST("/v1/swaps", swapServer.HandleSwap)
+
+	e.GET("/v1/swaps/:orderid", swapServer.HandleSwapStatus)
 
 	return e
 }

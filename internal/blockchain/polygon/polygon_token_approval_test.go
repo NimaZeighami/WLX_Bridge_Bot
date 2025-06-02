@@ -23,9 +23,6 @@ func setupTestClient(t *testing.T) *ethclient.Client {
 
 func getTestPrivateKey(t *testing.T) *ecdsa.PrivateKey {
 	key := os.Getenv("PRIVATE_KEY")
-	if key == "" {
-		key = "dde619e9c94141eb5c60cf3c52e812f95db0a593543767a59e6b12e133a40c6d" // ⚠️ For testing only
-	}
 	pk, err := crypto.HexToECDSA(key)
 	assert.NoError(t, err, "Invalid private key")
 	return pk

@@ -1,19 +1,21 @@
+// This will handle:
+// Database init
+// Config loading
+// Token map construction
+// OS signal handling
+
 package services
 
 import (
 	"bridgebot/internal/database"
 	"bridgebot/internal/database/models"
 	log "bridgebot/internal/utils/logger"
-	"context"
 	"gorm.io/gorm"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
-// InitDatabase initializes the database connection and switches to the 'bridgebot_core' database, returning the GORM DB instance.
+//todo: move config of db to .env
+//todo: move this func to database directory
 func InitDatabase() *gorm.DB {
-	// todo: this fields should move to .env
 	config := models.DBConfig{
 		Username: "root",
 		Password: "@Nima8228",
@@ -33,16 +35,4 @@ func InitDatabase() *gorm.DB {
 		log.Fatalf("Error switching to database: %v", err)
 	}
 	return db
-}
-
-// todo: check this 
-func SetupSignalHandler(cancelFunc context.CancelFunc) {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-sigs
-		log.Warn("Received termination signal. Shutting down gracefully...")
-		cancelFunc()
-		os.Exit(0)
-	}()
 }

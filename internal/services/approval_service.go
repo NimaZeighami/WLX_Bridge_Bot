@@ -1,3 +1,11 @@
+// File Name: approval_service.go
+// This file contains the SubmitPolygonApproval function, which is responsible
+// for submitting an approval transaction on the Polygon blockchain. It interacts
+// with a specified token contract to approve a spender address for a required
+// amount, enabling further operations such as token transfers or bridging.
+
+//todo: move these functions to blockchain/polygon package
+
 package services
 
 import (
@@ -6,24 +14,23 @@ import (
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// CheckPolygonApproval determines whether a token approval is required for a given owner and amount on the Polygon network.
-func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddress string, requiredAmount *big.Int) bool {
+func CheckPolygonApproval(ctx context.Context, fromWalletAddress, bridgeProviderContractAddr, TokenContractAddress string, requiredAmount *big.Int) (bool, error) {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
+		return false, err
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
-	spender := common.HexToAddress(owner)
 
 	log.Info("Checking if approval is needed...")
-	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(owner), spender, requiredAmount)
+	isNeeded, err := polygon.IsApprovalNeeded(client, tokenAddress, common.HexToAddress(fromWalletAddress), common.HexToAddress(bridgeProviderContractAddr), requiredAmount)
 	if err != nil {
 		log.Fatalf("Error checking approval status: %v", err)
+		return false, err
 	}
 
 	if !isNeeded {
@@ -31,11 +38,11 @@ func CheckPolygonApproval(ctx context.Context, owner string, TokenContractAddres
 	} else {
 		log.Info("Approval is needed!!")
 	}
-	return isNeeded
+	return isNeeded, nil
 }
 
-// SubmitPolygonApproval submits an approval transaction on the Polygon network, allowing the specified spender to spend a given amount of tokens on behalf of the owner.
-func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddress, spenderAddress string, requiredAmount *big.Int) error {
+
+func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProviderContractAddress string, requiredAmount *big.Int) error {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
@@ -50,9 +57,9 @@ func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddre
 		return err
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
-	spender := common.HexToAddress(spenderAddress)
+	bridgeProviderContractAddr := common.HexToAddress(bridgeProviderContractAddress)
 
-	txHash, err := polygon.ApproveContract(client, tokenAddress, spender, requiredAmount, privateKey)
+	txHash, err := polygon.ApproveContract(client, tokenAddress, bridgeProviderContractAddr, requiredAmount, privateKey)
 	if err != nil {
 		log.Fatalf("Error approving contract: %v", err)
 		return err
@@ -62,4 +69,16 @@ func SubmitPolygonApproval(ctx context.Context, owner string, TokenContractAddre
 	log.Infof("Check on PolygonScan: https://polygonscan.com/tx/%s", txHash)
 
 	return nil
+}
+
+//todo: pass polygon client as a dependency to the functions instead of creating a new client each time.
+//todo: create a generic approval service that can handle multiple networks
+//todo: create a network interface that defines the methods for checking approval, submitting approval, signing transactions, and sending them.
+// network -> interface  , methods : checkApproval, submitApproval, sign , send 
+// each network -> struct
+func CheckApproval(ctx context.Context, fromWalletAddress, bridgeProviderContractAddr, TokenContractAddress string, requiredAmount *big.Int, network string ) (bool, error) {
+	// This function is a placeholder for future implementations.
+	// Currently, it does not perform any operations and returns false.
+	log.Info("CheckApproval function is not implemented yet.")
+	return false, nil
 }

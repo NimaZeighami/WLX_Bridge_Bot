@@ -1,57 +1,49 @@
-// Bridger interface (GetQuote, Approve, Sign, Broadcast)
-
 package bridge
 
 import (
 	"context"
+	"math/big"
 )
 
-type Bridger interface {
-	GetQuote(ctx context.Context, req QuoteRequest) (QuoteResponse, error)
-    // TODO: Uncomment and implement the following methods as needed
-	// IsApproveNeeded(ctx context.Context, req ApproveRequest) (ApproveResponse, error)
-	// Approve(ctx context.Context, req ApproveRequest) (ApproveResponse, error)
-	// Sign(ctx context.Context, req SignRequest) (SignedTransaction, error)
-	// Broadcast(ctx context.Context, tx SignedTransaction) (BroadcastResult, error)
+type BridgeProvider interface {
+	Quote(fromAmount, fromToken, fromChain, toToken, toChain, fromWalletAddress string, ctx context.Context) (amountOut string, err error)
+	ApprovalNeeded(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) (bool, error)
+	Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) error
+	BroadCast(fromAddress, toAddress, fromToken, toToken, ToAmountMin string, fromAmount *big.Int, ctx context.Context) (txhash string, err error)
 }
 
-type QuoteRequest struct {
-	FromToken         string  `json:"fromToken"`
-	FromTokenChain         string  `json:"fromTokenChain"`
-	FromTokenAmount   float64 `json:"fromTokenAmount"`
-	ToToken           string  `json:"toToken"`
-	ToTokenChain           string  `json:"ToTokenChain"`
-	FromWalletAddress string  `json:"fromWalletAddress"`
-	ToWalletAddress   string  `json:"toWalletAddress"`
+// todo: make parameters of BridgeProvider methods structs instead of multiple strings and ints
+// ?> QuoteRequiredParams , ...
+
+func FetchQuoteAmount(provider BridgeProvider, fromAmount, fromToken, fromChain, toToken, toChain, fromWalletAddr string, ctx context.Context) (string, error) {
+	amountOut, err := provider.Quote(fromAmount, fromToken, fromChain, toToken, toChain, fromWalletAddr, ctx)
+	if err != nil {
+		return "0", err
+	}
+	return amountOut, nil
 }
 
-type QuoteResponse struct { 
-    QuoteId int `json:"quoteId"`
-    ToTokenAmount float64 `json:"toTokenAmount"`
+func CheckTokenApproval(provider BridgeProvider, fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) (bool, error) {
+	isApprovalNeeded, err := provider.ApprovalNeeded(fromAddress, fromTokenAddress, bridgeProviderContractaddress, requiredAmount, ctx)
+	if err != nil {
+		return false, err
+	}
+	return isApprovalNeeded, nil
 }
 
-type ApproveFields struct { 
-    TokenAddress string `json:"tokenAddress"`
-    TokenChain string `json:"tokenChain"`
-    RequiredAmount string `json:"requiredAmount"`
-}
-
-type IsApproveNedded struct { 
-    RequiredAmount float64 `json:"requiredAmount"`
-    CurrentApprovedAmount float64 `json:"currentApprovedAmount"`
+func RequestTokenApproval(provider BridgeProvider, fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) error {
+	err := provider.Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress, requiredAmount, ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 
-
-
-
-
-
-
-type SignRequest struct { /* fields */
-}
-type SignedTransaction struct { /* fields */
-}
-
-type BroadcastResult struct { /* fields */
+func FinalizeTransaction(provider BridgeProvider,fromAddress, toAddress, fromToken, toToken, ToAmountMin string, fromAmount *big.Int, ctx context.Context) (string, error) {
+	txHash, err := provider.BroadCast(fromAddress, toAddress, fromToken, toToken, ToAmountMin , fromAmount , ctx )
+	if err != nil {
+		return "", err
+	}
+	return txHash, nil
 }

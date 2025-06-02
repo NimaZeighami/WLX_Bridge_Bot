@@ -8,6 +8,7 @@ import (
 	"bridgebot/internal/database/models"
 )
 
+
 // Connect initializes the connection to the MySQL server using GORM
 func Connect(config models.DBConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.Username, config.Password, config.Host, config.Port, config.Database)
@@ -61,6 +62,8 @@ func InitializeDatabase(config models.DBConfig) error {
 			return err
 		}
 	}
+
+
 	log.Info("Database is created successfully!")
 	log.Warn("But creating tables and initializing data is on command line !")
 	return nil

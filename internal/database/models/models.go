@@ -49,12 +49,17 @@ type NetworkTokenPair struct {
 
 type Quote struct {
 	ID               uint      `gorm:"primaryKey"`
+	OrderId          string    `gorm:"column:order_id"`
 	FromTokenAddress string    `gorm:"column:from_token_address"`
 	ToTokenAddress   string    `gorm:"column:to_token_address"`
 	FromTokenSymbol   string    `gorm:"column:from_token_symbol"`
 	ToTokenSymbol   string    `gorm:"column:to_token_symbol"`
 	FromChain        string    `gorm:"column:from_chain"`
 	ToChain          string    `gorm:"column:to_chain"`
+	FromToken        string    `gorm:"column:from_token"`
+	ToToken          string    `gorm:"column:to_token"`
+	FromCoinCode     string    `gorm:"column:from_coin_code"`
+	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAddress      string    `gorm:"column:from_address"`
 	ToAddress        string    `gorm:"column:to_address"`
 	FromCoinCode     string    `gorm:"column:from_coin_code"`
