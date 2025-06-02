@@ -4,6 +4,8 @@
 // with a specified token contract to approve a spender address for a required
 // amount, enabling further operations such as token transfers or bridging.
 
+//todo: move these functions to blockchain/polygon package
+
 package services
 
 import (
@@ -12,14 +14,9 @@ import (
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
-
-// const (
-// 	BridgingAmount = 3_000_000 // Amount to approve, get qoute from bridgers and sing & broadcast transaction
-// )
 
 func CheckPolygonApproval(ctx context.Context, fromWalletAddress, bridgeProviderContractAddr, TokenContractAddress string, requiredAmount *big.Int) (bool, error) {
 	client, err := polygon.NewPolygonClient()
@@ -44,6 +41,7 @@ func CheckPolygonApproval(ctx context.Context, fromWalletAddress, bridgeProvider
 	return isNeeded, nil
 }
 
+
 func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProviderContractAddress string, requiredAmount *big.Int) error {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
@@ -60,7 +58,6 @@ func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProv
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
 	bridgeProviderContractAddr := common.HexToAddress(bridgeProviderContractAddress)
-	// requiredAmount := big.NewInt(BridgingAmount)
 
 	txHash, err := polygon.ApproveContract(client, tokenAddress, bridgeProviderContractAddr, requiredAmount, privateKey)
 	if err != nil {
@@ -72,4 +69,16 @@ func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProv
 	log.Infof("Check on PolygonScan: https://polygonscan.com/tx/%s", txHash)
 
 	return nil
+}
+
+//todo: pass polygon client as a dependency to the functions instead of creating a new client each time.
+//todo: create a generic approval service that can handle multiple networks
+//todo: create a network interface that defines the methods for checking approval, submitting approval, signing transactions, and sending them.
+// network -> interface  , methods : checkApproval, submitApproval, sign , send 
+// each network -> struct
+func CheckApproval(ctx context.Context, fromWalletAddress, bridgeProviderContractAddr, TokenContractAddress string, requiredAmount *big.Int, network string ) (bool, error) {
+	// This function is a placeholder for future implementations.
+	// Currently, it does not perform any operations and returns false.
+	log.Info("CheckApproval function is not implemented yet.")
+	return false, nil
 }

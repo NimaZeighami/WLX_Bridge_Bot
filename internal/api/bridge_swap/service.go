@@ -123,12 +123,18 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (amountIn, 
 		log.Errorf("failed to insert quote: %v", err)
 		return fromAmountStr, toAmount, 0, fmt.Errorf("failed to store quote")
 	}
-	
+
 	return fromAmountStr, toAmount, quote.ID, nil
 }
 
 func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, error) {
 	var quote models.Quote
+
+	log.Warnf("quote.FromAmount raw value: '%s'", quote.FromAmount)
+
+	if err := s.DB.First(&quote, uint(quoteID)).Error; err != nil {
+		return "", fmt.Errorf("quote not found: %w", err)
+	}
 
 	fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
 	if err != nil {
@@ -136,17 +142,37 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	}
 	fromAmount := big.NewInt(fromAmountInt)
 
+	// ? If we want to revoke approval before submitting a new one, we can uncomment the following lines
 	// revokeErr := services.SubmitPolygonApproval(ctx, quote.FromAddress, quote.FromTokenAddress, quote.ToTokenAddress, big.NewInt(0))
 	// if revokeErr != nil {
 	// 	s.DB.Model(&quote).Update("state", "failed")
 	// 	return "", fmt.Errorf("approval failed: %v", revokeErr)
 	// }
 
+	//todo: make approvement generic for all chains
+	// switch quote.FromChain {
+	// case "ETH", "BSC", "POLYGON" : // Supported EVM Based Chains
+	// case "TRX": // TRON Chain
+	// default:
+	// 	return "", fmt.Errorf("unsupported chain: %s", quote.FromChain)
+	// }
+
+	bridger := bridge.SelectBestBridger()
 	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
+	// if strings.ToUpper(quote.FromChain) == "POLYGON" {
+	// 	isApprovalNeeded, _ := services.CheckPolygonApproval(ctx, quote.FromAddress, configs.GetBridgersContractAddr("POLYGON"), quote.FromTokenAddress, fromAmount)
+	// 	if isApprovalNeeded {
+	// 		err := services.SubmitPolygonApproval(ctx, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
+	// 		if err != nil {
+	// 			s.DB.Model(&quote).Update("state", "approval_failed")
+	// 			return "", fmt.Errorf("approval failed: %v", err)
+	// 		}
+	// 	}
+	// }
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
-		isApprovalNeeded, _ := services.CheckPolygonApproval(ctx, quote.FromAddress, configs.GetBridgersContractAddr("POLYGON"), quote.FromTokenAddress, fromAmount)
+		isApprovalNeeded, _ := bridge.CheckTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, configs.GetBridgersContractAddr("POLYGON"), fromAmount, ctx)
 		if isApprovalNeeded {
-			err := services.SubmitPolygonApproval(ctx, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
+			err := bridge.RequestTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, configs.GetBridgersContractAddr("POLYGON"), fromAmount, ctx)
 			if err != nil {
 				s.DB.Model(&quote).Update("state", "approval_failed")
 				return "", fmt.Errorf("approval failed: %v", err)

@@ -8,11 +8,6 @@ import (
 	"bridgebot/internal/database/models"
 )
 
-//TODO: These models should be moved to models package
-
-
-
-//TODO: ↑↑↑↑
 
 // Connect initializes the connection to the MySQL server using GORM
 func Connect(config models.DBConfig) (*gorm.DB, error) {

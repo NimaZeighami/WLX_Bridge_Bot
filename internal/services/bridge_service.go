@@ -69,7 +69,7 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	log.Infof("Using wallet address: %s", fromAddress.Hex())
 
-	// ! Uncomment this if we need use without API verion ↓↓↓
+	//Todo: get spender address from environment variable
 	spenderAddress := common.HexToAddress("0xb685760ebd368a891f27ae547391f4e2a289895b") // Bridge contract
 	tokenAddress := common.HexToAddress(polygon.TokenAddress)    
 	FromTokenAmount , err:=strconv.ParseInt(request.FromTokenAmount,10 , 64)
@@ -106,25 +106,3 @@ func ExecuteBridgeTransaction(ctx context.Context, request bridgers.CallDataRequ
 
 	return txHash, nil
 }
-
-// func ExecuteFullBridgeProcess(ctx context.Context, userAddr string, from, to models.TokenInfo) (string, error) {
-// 	amountOutMin := calculateAmountOutMin(BridgingAmount, 0.002) // 0.2% slippage
-
-// 	request := BuildCalldataRequest(userAddr, userAddr, from, to, amountOutMin)
-
-// 	return ExecuteBridgeTransaction(ctx, request)
-// }
-
-// // calculateAmountOutMin calculates the minimum acceptable output amount with slippage
-// func calculateAmountOutMin(amount int64, slippagePercent float64) string {
-// 	amountFloat := new(big.Float).SetInt64(amount)
-
-// 	slippageFloat := new(big.Float).SetFloat64(1.0 - slippagePercent)
-
-// 	minAmount := new(big.Float).Mul(amountFloat, slippageFloat)
-
-// 	result := new(big.Int)
-// 	minAmount.Int(result)
-
-// 	return result.String()
-// }
