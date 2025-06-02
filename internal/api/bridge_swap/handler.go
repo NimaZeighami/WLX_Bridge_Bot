@@ -148,3 +148,38 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 	})
 	// TODO: ADD implement other bridgers API for tracking Transaction Status
 }
+
+// HandleSwapStatus handles GET /v1/swaps/:id to return the current status of a swap quote.
+func (s *SwapServer) HandleSwapStatus(c echo.Context) error {
+	quoteOrderId := c.Param("orderid")
+	if quoteOrderId == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Missing order ID in URL",
+		})
+	}
+
+	var quote models.Quote
+	if err := s.DB.Where("order_id = ?", quoteOrderId).First(&quote).Error; err != nil {
+		log.Errorf("Quote not found for orderId: %s", quoteOrderId)
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Quote not found for provided orderId",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"quoteId":      quote.ID,
+		"state":        quote.State,
+		"fromChain":    quote.FromChain,
+		"toChain":      quote.ToChain,
+		"fromToken":    quote.FromToken,
+		"toToken":      quote.ToToken,
+		"fromAddress":  quote.FromAddress,
+		"toAddress":    quote.ToAddress,
+		"txHash":       quote.TxHash,
+		"orderId":      quote.OrderId,
+		"fromAmount":   quote.FromAmount,
+		"toAmountMin":  quote.ToAmountMin,
+		"updatedAt":    quote.UpdatedAt,
+	})
+}
+

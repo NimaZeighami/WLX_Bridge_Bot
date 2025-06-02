@@ -24,9 +24,11 @@ func NewServer(swapServer *bridge_swap.SwapServer) *echo.Echo {
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	e.POST("/v1/getQuote",  swapServer.HandleQuote)
+	e.POST("/v1/quotes",  swapServer.HandleQuote)
 
-	e.POST("/v1/swap", swapServer.HandleSwap)
+	e.POST("/v1/swaps", swapServer.HandleSwap)
+
+	e.GET("/v1/swaps/:orderid", swapServer.HandleSwapStatus)
 
 	return e
 }
