@@ -28,11 +28,12 @@ type BridgeConfiguration struct {
 }
 
 type TokenInfo struct {
-	ChainID                      int
+	ChainID                      int //
 	TokenContractAddress         string
 	TokenDecimals                int
-	BridgersSmartContractAddress string
-	IsEnabled                    bool
+	BridgersSmartContractAddress string //
+	IsEnabled                    bool   //
+
 }
 
 var DB *gorm.DB
@@ -51,6 +52,8 @@ type Quote struct {
 	OrderId          string    `gorm:"column:order_id"`
 	FromTokenAddress string    `gorm:"column:from_token_address"`
 	ToTokenAddress   string    `gorm:"column:to_token_address"`
+	FromTokenSymbol   string    `gorm:"column:from_token_symbol"`
+	ToTokenSymbol   string    `gorm:"column:to_token_symbol"`
 	FromChain        string    `gorm:"column:from_chain"`
 	ToChain          string    `gorm:"column:to_chain"`
 	FromToken        string    `gorm:"column:from_token"`
@@ -59,6 +62,8 @@ type Quote struct {
 	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAddress      string    `gorm:"column:from_address"`
 	ToAddress        string    `gorm:"column:to_address"`
+	FromCoinCode     string    `gorm:"column:from_coin_code"`
+	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAmount       string    `gorm:"column:from_amount"`
 	ToAmountMin      string    `gorm:"column:to_amount_min"`
 	TxHash           string    `gorm:"column:tx_hash"`

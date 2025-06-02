@@ -33,7 +33,7 @@ func Get[T any](ctx context.Context, baseURL string, headers map[string]string, 
 		Timeout: 5 * time.Second,
 	}
 
-	const maxRetries = 3 // TODO: get it from config in the params
+	const maxRetries = 3 // todo: get it from config in the params
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Infof("Attempt %d to call %s", attempt, finalURL)
@@ -61,8 +61,6 @@ func Get[T any](ctx context.Context, baseURL string, headers map[string]string, 
 		if err := parsedResponse.ParseJSON(&result); err != nil {
 			return nil, err
 		}
-
-		// log.Infof("GET request successful: %s", finalURL)
 		return &result, nil
 	}
 
@@ -75,8 +73,6 @@ func Post[T any](ctx context.Context, url string, headers map[string]string, bod
 	if err != nil {
 		return nil, fmt.Errorf("error encoding JSON body: %v", err)
 	}
-
-	// log.Infof("Sending POST request to URL: %s", url)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, strings.NewReader(string(jsonBody)))
 	if err != nil {
@@ -121,8 +117,6 @@ func Post[T any](ctx context.Context, url string, headers map[string]string, bod
 		if err := parsedResponse.ParseJSON(&result); err != nil {
 			return nil, err
 		}
-
-		// log.Infof("POST request successful: %s", url)
 		return &result, nil
 	}
 

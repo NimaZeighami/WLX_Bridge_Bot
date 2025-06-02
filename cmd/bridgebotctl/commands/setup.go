@@ -1,4 +1,3 @@
-// This is going to create the database if it doesn't exist
 package commands
 
 import (
@@ -45,5 +44,6 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 }
 
+// ! Warning
 // ! consider that because of relative path, 
-// ! the command will not work if you run it from another directory, so you need to run it from the root of the project
+// ! these commands will not work if you run it from another directory, so you need to run it from the root of the project
