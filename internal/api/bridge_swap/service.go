@@ -159,16 +159,6 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 
 	bridger := bridge.SelectBestBridger()
 	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
-	// if strings.ToUpper(quote.FromChain) == "POLYGON" {
-	// 	isApprovalNeeded, _ := services.CheckPolygonApproval(ctx, quote.FromAddress, configs.GetBridgersContractAddr("POLYGON"), quote.FromTokenAddress, fromAmount)
-	// 	if isApprovalNeeded {
-	// 		err := services.SubmitPolygonApproval(ctx, quote.FromTokenAddress, quote.ToTokenAddress, fromAmount)
-	// 		if err != nil {
-	// 			s.DB.Model(&quote).Update("state", "approval_failed")
-	// 			return "", fmt.Errorf("approval failed: %v", err)
-	// 		}
-	// 	}
-	// }
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
 		isApprovalNeeded, _ := bridge.CheckTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, configs.GetBridgersContractAddr("POLYGON"), fromAmount, ctx)
 		if isApprovalNeeded {
@@ -187,15 +177,13 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 
 	toToken := quote.ToTokenAddress
 
-	callReq := services.BuildCalldataRequest(
-		quote.FromAddress,
+
+	txHash, broadcastErr := bridge.FinalizeTransaction(bridger, quote.FromAddress,
 		quote.ToAddress,
 		fromToken,
 		toToken,
 		quote.ToAmountMin,
-		fromAmount)
-
-	txHash, broadcastErr := services.ExecuteBridgeTransaction(ctx, callReq)
+		fromAmount, ctx)
 	if broadcastErr != nil {
 		s.DB.Model(&quote).Updates(map[string]interface{}{
 			"state":   "Broadcast_failed",

@@ -23,46 +23,6 @@ func main() {
 }
 
 // TODO:
-// ?  1. fix the worker with crunjob and update the state to verified 
+// ?  1. fix the worker with crunjob and update the state to verified
 // *  2. Add get Quote Details API
-// !  3. Add bridge provider interface (after learning interface and reading oop from designpattern)
-// ?  4. Check Approve functions one by one before writing interfaces
-
-
-
-// 🧩 ۴. استفاده از این Interface در SwapServer
-
-// در SwapServer یک فیلد اضافه کن:
-
-// type SwapServer struct {
-// 	DB             *gorm.DB
-// 	BridgeProvider BridgeProvider
-// }
-
-// و در تابع NewSwapServer آن را مقداردهی کن:
-
-// func NewSwapServer(db *gorm.DB, provider BridgeProvider) *SwapServer {
-// 	return &SwapServer{
-// 		DB:             db,
-// 		BridgeProvider: provider,
-// 	}
-// }
-
-// 🔄 ۵. استفاده در ProcessQuote و ProcessSwap
-
-// quoteResp, err := s.BridgeProvider.Quote(...)
-// ...
-// isNeeded, err := s.BridgeProvider.ApprovalNeeded(...)
-// ...
-// err = s.BridgeProvider.Approve(...)
-// ...
-// callData, _ := s.BridgeProvider.CallData()
-// signedTx, _ := s.BridgeProvider.Sign(callData)
-// txHash, _ := s.BridgeProvider.BroadCast(signedTx)
-
-// 🧪 ۶. راه‌اندازی
-
-// در فایل main.go یا هر کجا که سرور را بالا می‌آوری:
-
-// provider := &BridgersProvider{}
-// swapServer := NewSwapServer(db, provider)
+// !  3. Add BridgersProvider to dependencies to swapServer struct
