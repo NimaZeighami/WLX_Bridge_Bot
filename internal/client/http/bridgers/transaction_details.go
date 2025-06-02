@@ -55,15 +55,17 @@ type TXDetailsResponse struct {
 }
 
 // FetchTXDetails sends a order id  to the Bridgers API.
-func FetchTXDetails(ctx context.Context, requestBody OrderIdContainer) (*TXDetailsResponse, error) {
+func FetchTXDetails(ctx context.Context, orderId string) (*TXDetailsResponse, error) {
 	url := "https://api.bridgers.xyz/api/exchangeRecord/getTransDataById"
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
 
-	log.Infof("Sending fetch transaction details: %+v", requestBody)
+	log.Infof("Sending fetch transaction details: %+v", orderId)
 
-	response, err := http.Post[TXDetailsResponse](ctx, url, headers, requestBody)
+	payload := OrderIdContainer{OrderID: orderId} // ✅ FIX HERE
+
+	response, err := http.Post[TXDetailsResponse](ctx, url, headers, payload)
 	if err != nil {
 		log.Errorf("Error fetching quote: %v", err)
 		return nil, fmt.Errorf("failed to fetch quote: %w", err)
@@ -77,3 +79,4 @@ func FetchTXDetails(ctx context.Context, requestBody OrderIdContainer) (*TXDetai
 	log.Infof("fetch transaction details successful. Data: %+v", response.Data)
 	return response, nil
 }
+

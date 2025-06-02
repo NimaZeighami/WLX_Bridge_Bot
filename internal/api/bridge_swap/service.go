@@ -13,7 +13,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
-	// "time"
+	"time"
 	"bridgebot/configs"
 	"bridgebot/internal/services/bridge"
 	// "bridgebot/internal/services/bridge/thebridgers"
@@ -221,34 +221,71 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	})
 
 	log.Infof("Order ID: %s, Quote ID: %v", orderId, quote.ID)
-
-	// go func(orderId string, quoteId uint) {
-	// 	pollCtx := context.Background()
-	// 	maxRetries := 24 // 24 x 5min = 2h
-	// 	for i := 0; i < maxRetries; i++ {
-	// 		time.Sleep(5 * time.Minute)
-
-	// 		resp, err := bridgers.FetchTXDetails(pollCtx, bridgers.OrderIdContainer{
-	// 			OrderID: orderId,
-	// 		})
-	// 		if err != nil {
-	// 			log.Errorf("Polling failed for quote %d (try %d): %v", quoteId, i+1, err)
-	// 			continue
-	// 		}
-
-	// 		status := resp.Data.Status
-	// 		log.Infof("Polling attempt %d for quote %d: status=%s", i+1, quoteId, status)
-
-	// 		if status == "receive_complete" {
-	// 			s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "completed")
-	// 			break
-	// 		}
-	// 		if strings.HasPrefix(status, "error") || status == "expired" {
-	// 			s.DB.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "failed")
-	// 			break
-	// 		}
-	// 	}
-	// }(quote.OrderId, quote.ID)
+	PollQuoteStatus(s.DB, orderId, quote.ID)
 
 	return txHash, nil
 }
+
+
+
+func handlePollingStep(ctx context.Context, db *gorm.DB, orderId string, quoteId uint, attempt int) (shouldStop bool) {
+	resp, err := bridgers.FetchTXDetails(ctx, orderId)
+	if err != nil {
+		log.Errorf("Polling failed for quote %d (attempt %d): %v", quoteId, attempt, err)
+		return false 
+	}
+
+	status := resp.Data.Status
+	log.Infof("Polling attempt %d for quote %d: status=%s", attempt, quoteId, status)
+
+	switch {
+	case status == "receive_complete":
+		if err := db.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "completed").Error; err != nil {
+			log.Errorf("DB update (completed) failed: %v", err)
+		}
+		return true
+	case strings.HasPrefix(status, "error"), status == "expired":
+		if err := db.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "failed").Error; err != nil {
+			log.Errorf("DB update (failed) failed: %v", err)
+		}
+		return true 
+	}
+
+	return false 
+}
+
+
+func PollQuoteStatus(db *gorm.DB, orderId string, quoteId uint) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Infof("Recovered in polling goroutine for quote %d: %v", quoteId, r)
+			}
+		}()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Hour)
+		defer cancel()
+
+		log.Infof("Polling (immediate) for quote %d", quoteId)
+		if stop := handlePollingStep(ctx, db, orderId, quoteId, 1); stop {
+			return
+		}
+
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+
+		for attempt := 2; attempt <= 24; attempt++ {
+			select {
+			case <-ctx.Done():
+				log.Infof("Polling context done for quote %d: %v", quoteId, ctx.Err())
+				return
+			case <-ticker.C:
+				log.Infof("Polling (attempt %d) for quote %d", attempt, quoteId)
+				if stop := handlePollingStep(ctx, db, orderId, quoteId, attempt); stop {
+					return
+				}
+			}
+		}
+	}()
+}
+
