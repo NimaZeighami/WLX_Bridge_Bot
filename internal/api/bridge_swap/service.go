@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"gorm.io/gorm"
-	"math"
+	"github.com/shopspring/decimal"
 	"math/big"
 	"strconv"
 	"strings"
@@ -88,11 +88,51 @@ func TokenSymbol(chainSymbol string) string {
 	return ""
 }
 
+// ConvertToBaseUnits converts a human-readable amount to base units based on the given decimals.
+func ConvertToBaseUnits(amountStr string, decimals int) (string, error) {
+	amountDecimal, err := decimal.NewFromString(amountStr)
+	if err != nil {
+		return "", err
+	}
+
+	scale := decimal.New(1, int32(decimals))
+	scaledAmount := amountDecimal.Mul(scale)
+
+	return scaledAmount.StringFixed(0), nil
+}
+
+// ConvertFromBaseUnits converts a base unit amount to a human-readable format based on the given decimals.
+func ConvertFromBaseUnits(baseAmountStr string, decimals int) (string, error) {
+	baseAmountDecimal, err := decimal.NewFromString(baseAmountStr)
+	if err != nil {
+		return "", err
+	}
+
+	scale := decimal.New(1, int32(decimals))
+
+	humanAmount := baseAmountDecimal.Div(scale)
+
+	return humanAmount.String(), nil
+}
+
 func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (amountIn, amoutOut string, quoteID uint, err error) {
 	var bridger bridge.BridgeProvider
 
-	fromAmount := float64(req.FromTokenAmount) * math.Pow(10, float64(ChainDecimal(req.FromTokenChain)))
-	fromAmountStr := strconv.FormatFloat(fromAmount, 'f', -1, 64)
+	// fromAmount := float64(req.FromTokenAmount) * math.Pow(10, float64(ChainDecimal(req.FromTokenChain)))
+	// fromAmountStr := strconv.FormatFloat(fromAmount, 'f', -1, 64)
+
+	fromAmountStr, err := ConvertToBaseUnits(req.FromTokenAmount, ChainDecimal(req.FromTokenChain))
+	if err != nil {
+		log.Errorf("invalid amount: %v", err)
+		return "", "0", 0, fmt.Errorf("invalid amount: %w", err)
+	}
+
+
+    fromAmount := new(big.Int)
+	if _, ok := fromAmount.SetString(fromAmountStr, 10); !ok {
+		log.Errorf("failed to parse fromAmount to big.Int")
+		return "","0",0, fmt.Errorf("invalid from amount")
+	}
 
 	bridger = bridge.SelectBestBridger()
 

@@ -62,6 +62,7 @@ require (
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shengdoushi/base58 v1.0.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
+	github.com/shopspring/decimal v1.4.0 
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/supranational/blst v0.3.14 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
