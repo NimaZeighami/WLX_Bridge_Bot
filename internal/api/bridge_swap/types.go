@@ -14,6 +14,10 @@ type QuoteRes struct {
 	Message string `json:"message"`
 }
 
+type ApprovalReq struct{
+	QuoteId string `json:"quoteId" validate:"required"`
+}
+
 type SwapReq struct {
 	QuoteId  string  `json:"quoteId" validate:"required"`
 }

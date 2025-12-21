@@ -26,6 +26,8 @@ func NewServer(swapServer *bridge_swap.SwapServer) *echo.Echo {
 
 	e.POST("/v1/quotes",  swapServer.HandleQuote)
 
+	e.POST("/v1/approvals", swapServer.HandleApproval)
+
 	e.POST("/v1/swaps", swapServer.HandleSwap)
 
 	e.GET("/v1/swaps/:orderid", swapServer.HandleSwapStatus)

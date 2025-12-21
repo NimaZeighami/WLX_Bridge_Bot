@@ -43,9 +43,9 @@ func (b TheBridgers) ApprovalNeeded(fromAddress, fromTokenAddress, bridgeProvide
 	return isApprovalNeeded, err
 }
 
-func (b TheBridgers) Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) error {
-	services.SubmitPolygonApproval(ctx, fromTokenAddress, configs.GetBridgersContractAddr("POlYGON"), requiredAmount)
-	return nil
+func (b TheBridgers) Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) (approvalTxHash string, err error) {
+	approvalTxHash , err = services.SubmitPolygonApproval(ctx, fromTokenAddress, configs.GetBridgersContractAddr("POlYGON"), requiredAmount)
+	return approvalTxHash , err
 }
 func (b TheBridgers) BroadCast(fromAddress, toAddress, fromToken, toToken, ToAmountMin string, fromAmount *big.Int, ctx context.Context) (txhash string,err error) {
 	callReq := services.BuildCalldataRequest(

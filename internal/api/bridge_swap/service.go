@@ -1,21 +1,21 @@
 package bridge_swap
 
 import (
+	"bridgebot/configs"
 	"bridgebot/internal/client/http/bridgers"
 	"bridgebot/internal/constants"
 	"bridgebot/internal/database/models"
 	"bridgebot/internal/services"
+	"bridgebot/internal/services/bridge"
 	log "bridgebot/internal/utils/logger"
 	"context"
 	"fmt"
-	"gorm.io/gorm"
 	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 	"math/big"
 	"strconv"
 	"strings"
 	"time"
-	"bridgebot/configs"
-	"bridgebot/internal/services/bridge"
 	// "bridgebot/internal/services/bridge/thebridgers"
 )
 
@@ -127,11 +127,10 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (amountIn, 
 		return "", "0", 0, fmt.Errorf("invalid amount: %w", err)
 	}
 
-
-    fromAmount := new(big.Int)
+	fromAmount := new(big.Int)
 	if _, ok := fromAmount.SetString(fromAmountStr, 10); !ok {
 		log.Errorf("failed to parse fromAmount to big.Int")
-		return "","0",0, fmt.Errorf("invalid from amount")
+		return "", "0", 0, fmt.Errorf("invalid from amount")
 	}
 
 	bridger = bridge.SelectBestBridger()
@@ -167,10 +166,79 @@ func (s *SwapServer) ProcessQuote(ctx context.Context, req QuoteReq) (amountIn, 
 	return fromAmountStr, toAmount, quote.ID, nil
 }
 
-func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, error) {
+func (s *SwapServer) ProcessApproval(ctx context.Context, quoteID uint) (string, error) {
 	var quote models.Quote
 
-	log.Warnf("quote.FromAmount raw value: '%s'", quote.FromAmount)
+	if err := s.DB.First(&quote, uint(quoteID)).Error; err != nil {
+		return "", fmt.Errorf("quote not found: %w", err)
+	}
+
+	// fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
+	// if err != nil {
+	// 	return "", fmt.Errorf("invalid from amount: %v", err)
+	// }
+	// fromAmount := big.NewInt(fromAmountInt)
+	bridger := bridge.SelectBestBridger()
+
+		// ? If we want to revoke approval before submitting a new one, we can uncomment the following lines
+		revokeHash, revokeErr := bridge.RequestTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, "0xb685760ebd368a891f27ae547391f4e2a289895b" /*fromAmount*/, big.NewInt(1000000000), ctx)
+		if revokeErr != nil {
+			s.DB.Model(&quote).Update("state", "failed")
+			return "", fmt.Errorf("approval failed: %v", revokeErr)
+		}
+		log.Infof("Revoke Approval Tx Hash: %s", revokeHash)
+	var txhash string
+	// todo: like Polygon we should check chain and based on that have approval (Switch-Case)
+	if strings.ToUpper(quote.FromChain) == "POLYGON" {
+		isApprovalNeeded, _ := bridge.CheckTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, "0xb685760ebd368a891f27ae547391f4e2a289895b" /*fromAmount*/, big.NewInt(0), ctx)
+		if isApprovalNeeded {
+			var err error
+			txhash, err = bridge.RequestTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, "0xb685760ebd368a891f27ae547391f4e2a289895b" /*fromAmount*/, big.NewInt(0), ctx)
+			if err != nil {
+				s.DB.Model(&quote).Update("state", "approval_failed")
+				return "", fmt.Errorf("approval failed: %v", err)
+			}
+		}
+	}
+	s.DB.Model(&quote).Updates(map[string]interface{}{
+		"state": "approved",
+	})
+
+	// var quote models.Quote
+
+	// if err := s.DB.First(&quote, uint(quoteID)).Error; err != nil {
+	// 	return "", fmt.Errorf("quote not found: %w", err)
+	// }
+
+	// fromAmountInt, err := strconv.ParseInt(quote.FromAmount, 10, 64)
+	// if err != nil {
+	// 	return "", fmt.Errorf("invalid from amount: %v", err)
+	// }
+	// fromAmount := big.NewInt(fromAmountInt)
+	// bridger := bridge.SelectBestBridger()
+	// var txhash string
+
+	// if strings.ToUpper(quote.FromChain) == "POLYGON" {
+	// 	isApprovalNeeded, _ := bridge.CheckTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, "0xb685760ebd368a891f27ae547391f4e2a289895b", fromAmount, ctx)
+	// 	if isApprovalNeeded {
+	// 		var err error
+	// 		txhash , err = bridge.RequestTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, "0xb685760ebd368a891f27ae547391f4e2a289895b", fromAmount, ctx)
+	// 		if err != nil {
+	// 			s.DB.Model(&quote).Update("state", "approval_failed")
+	// 			return "", fmt.Errorf("approval failed: %v", err)
+	// 		}
+	// 	}
+	// }
+
+	// s.DB.Model(&quote).Updates(map[string]interface{}{
+	// 	"state": "approved",
+	// })
+
+	return txhash, nil
+}
+
+func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, error) {
+	var quote models.Quote
 
 	if err := s.DB.First(&quote, uint(quoteID)).Error; err != nil {
 		return "", fmt.Errorf("quote not found: %w", err)
@@ -202,7 +270,7 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	if strings.ToUpper(quote.FromChain) == "POLYGON" {
 		isApprovalNeeded, _ := bridge.CheckTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, configs.GetBridgersContractAddr("POLYGON"), fromAmount, ctx)
 		if isApprovalNeeded {
-			err := bridge.RequestTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, configs.GetBridgersContractAddr("POLYGON"), fromAmount, ctx)
+			_, err := bridge.RequestTokenApproval(bridger, quote.FromAddress, quote.FromTokenAddress, configs.GetBridgersContractAddr("POLYGON"), fromAmount, ctx)
 			if err != nil {
 				s.DB.Model(&quote).Update("state", "approval_failed")
 				return "", fmt.Errorf("approval failed: %v", err)
@@ -216,7 +284,6 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	fromToken := quote.FromTokenAddress
 
 	toToken := quote.ToTokenAddress
-
 
 	txHash, broadcastErr := bridge.FinalizeTransaction(bridger, quote.FromAddress,
 		quote.ToAddress,
@@ -266,13 +333,11 @@ func (s *SwapServer) ProcessSwap(ctx context.Context, quoteID uint) (string, err
 	return txHash, nil
 }
 
-
-
 func handlePollingStep(ctx context.Context, db *gorm.DB, orderId string, quoteId uint, attempt int) (shouldStop bool) {
 	resp, err := bridgers.FetchTXDetails(ctx, orderId)
 	if err != nil {
 		log.Errorf("Polling failed for quote %d (attempt %d): %v", quoteId, attempt, err)
-		return false 
+		return false
 	}
 
 	status := resp.Data.Status
@@ -288,12 +353,11 @@ func handlePollingStep(ctx context.Context, db *gorm.DB, orderId string, quoteId
 		if err := db.Model(&models.Quote{}).Where("id = ?", quoteId).Update("state", "failed").Error; err != nil {
 			log.Errorf("DB update (failed) failed: %v", err)
 		}
-		return true 
+		return true
 	}
 
-	return false 
+	return false
 }
-
 
 func PollQuoteStatus(db *gorm.DB, orderId string, quoteId uint) {
 	go func() {
@@ -328,4 +392,3 @@ func PollQuoteStatus(db *gorm.DB, orderId string, quoteId uint) {
 		}
 	}()
 }
-

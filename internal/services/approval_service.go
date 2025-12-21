@@ -42,19 +42,19 @@ func CheckPolygonApproval(ctx context.Context, fromWalletAddress, bridgeProvider
 }
 
 
-func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProviderContractAddress string, requiredAmount *big.Int) error {
+func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProviderContractAddress string, requiredAmount *big.Int) (txhash string, err error) {
 	client, err := polygon.NewPolygonClient()
 	if err != nil {
 		log.Fatalf("Error initializing Polygon client: %v", err)
-		return err
+		return "", err
 	}
-
+ 
 	privateKeyHex := configs.GetPrivateKeyHex()
 
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)
 	if err != nil {
 		log.Fatalf("Failed to convert private key: %v", err)
-		return err
+		return "", err
 	}
 	tokenAddress := common.HexToAddress(TokenContractAddress)
 	bridgeProviderContractAddr := common.HexToAddress(bridgeProviderContractAddress)
@@ -62,13 +62,13 @@ func SubmitPolygonApproval(ctx context.Context, TokenContractAddress, bridgeProv
 	txHash, err := polygon.ApproveContract(client, tokenAddress, bridgeProviderContractAddr, requiredAmount, privateKey)
 	if err != nil {
 		log.Fatalf("Error approving contract: %v", err)
-		return err
+		return "", err
 	}
 
 	log.Infof("Approval successful! Transaction hash: %s", txHash)
 	log.Infof("Check on PolygonScan: https://polygonscan.com/tx/%s", txHash)
 
-	return nil
+	return txHash, nil
 }
 
 //todo: pass polygon client as a dependency to the functions instead of creating a new client each time.

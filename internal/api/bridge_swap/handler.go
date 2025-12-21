@@ -100,6 +100,53 @@ func (s *SwapServer) HandleQuote(c echo.Context) error {
 	})
 }
 
+func (s *SwapServer) HandleApproval(c echo.Context) error {
+	var req ApprovalReq
+	var quote models.Quote
+	if err := c.Bind(&req); err != nil || req.QuoteId == "0" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Valid quoteId is required in the JSON req",
+		})
+	}
+
+	log.Infof("Processing approval for quote ID: %s", req.QuoteId)
+
+	quoteIdUint64, err := strconv.ParseUint(req.QuoteId, 10, 64)
+	if err != nil {
+		log.Errorf("Approval failed for quote ID %s: %v", req.QuoteId, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "The ID you entered is probably invalid, its parsing failed: " + err.Error(),
+		})
+	}
+
+	if err := s.DB.First(&quote, uint(quoteIdUint64)).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Quote not found",
+		})
+	}
+	if quote.State != "started" {
+		log.Warnf("Quote ID %d is in state '%s', not allowed for processing", quoteIdUint64, quote.State)
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "The quote has already been used or is no longer in a 'started' state. Please create a new quote for this swap, or check the current state using the status endpoint.",
+		})
+	}
+
+	txhash , err := s.ProcessApproval(c.Request().Context(), uint(quoteIdUint64)) 
+	if  err != nil {
+		log.Errorf("Approval failed for quote ID %s: %v", req.QuoteId, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message":  "Approval submitted successfully",
+		"quote_id": req.QuoteId,
+		"approval_tx_hash":  txhash,
+
+	})
+}
+
 func (s *SwapServer) HandleSwap(c echo.Context) error {
 	var quote models.Quote
 	var req SwapReq
@@ -124,6 +171,8 @@ func (s *SwapServer) HandleSwap(c echo.Context) error {
 			"error": "Quote not found",
 		})
 	}
+
+	// TODO: check this state to "approved"
 	if quote.State != "started" {
 		log.Warnf("Quote ID %d is in state '%s', not allowed for processing", quoteIdUint64, quote.State)
 		return c.JSON(http.StatusBadRequest, map[string]string{
