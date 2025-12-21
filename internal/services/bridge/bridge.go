@@ -8,7 +8,7 @@ import (
 type BridgeProvider interface {
 	Quote(fromAmount, fromToken, fromChain, toToken, toChain, fromWalletAddress string, ctx context.Context) (amountOut string, err error)
 	ApprovalNeeded(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) (bool, error)
-	Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) error
+	Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) (ApprovalTxHash string, err error)
 	BroadCast(fromAddress, toAddress, fromToken, toToken, ToAmountMin string, fromAmount *big.Int, ctx context.Context) (txhash string, err error)
 }
 
@@ -31,12 +31,12 @@ func CheckTokenApproval(provider BridgeProvider, fromAddress, fromTokenAddress, 
 	return isApprovalNeeded, nil
 }
 
-func RequestTokenApproval(provider BridgeProvider, fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) error {
-	err := provider.Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress, requiredAmount, ctx)
+func RequestTokenApproval(provider BridgeProvider, fromAddress, fromTokenAddress, bridgeProviderContractaddress string, requiredAmount *big.Int, ctx context.Context) (txhash string, err error) {
+	txhash, err = provider.Approve(fromAddress, fromTokenAddress, bridgeProviderContractaddress, requiredAmount, ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return txhash, nil
 }
 
 

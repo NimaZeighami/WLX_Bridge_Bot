@@ -62,8 +62,6 @@ type Quote struct {
 	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAddress      string    `gorm:"column:from_address"`
 	ToAddress        string    `gorm:"column:to_address"`
-	FromCoinCode     string    `gorm:"column:from_coin_code"`
-	ToCoinCode       string    `gorm:"column:to_coin_code"`
 	FromAmount       string    `gorm:"column:from_amount"`
 	ToAmountMin      string    `gorm:"column:to_amount_min"`
 	TxHash           string    `gorm:"column:tx_hash"`
